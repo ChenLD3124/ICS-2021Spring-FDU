@@ -31,16 +31,20 @@ module SRAMTop(
     /**
      * TODO (optional) add address translations for isreq.addr & dsreq.addr :)
      */
-
+    i32 paddr_inst,paddr_data;
+    memtrans transinst(.vaddr(isreq.addr),.paddr(paddr_inst));
+    memtrans transdata(.vaddr(dsreq.addr),.paddr(paddr_data));
     assign inst_sram_en    = isreq.en;
     assign inst_sram_wen   = isreq.wen;
-    assign inst_sram_addr  = isreq.addr;
+    // assign inst_sram_addr  = isreq.addr;
+    assign inst_sram_addr = paddr_inst;
     assign inst_sram_wdata = isreq.wdata;
     assign isresp.rdata    = inst_sram_rdata;
 
     assign data_sram_en    = dsreq.en;
     assign data_sram_wen   = dsreq.wen;
-    assign data_sram_addr  = dsreq.addr;
+    // assign data_sram_addr  = dsreq.addr;
+    assign data_sram_addr = paddr_data;
     assign data_sram_wdata = dsreq.wdata;
     assign dsresp.rdata    = data_sram_rdata;
 
