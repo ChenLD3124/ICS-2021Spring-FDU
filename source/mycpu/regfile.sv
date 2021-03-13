@@ -1,6 +1,6 @@
 `include "pipeline.svh"
 module regfile(
-    input logic clk,
+    input logic clk,resetn,
     input creg_addr_t ra1, ra2, wa3,
     input logic write_enable,
     input word_t wd3,
@@ -10,7 +10,11 @@ module regfile(
 
     // write: sequential logic
     always_ff @(posedge clk) begin
-        regs[31:1] <= regs_nxt[31:1];
+        if(resetn) begin
+            regs[31:1] <= regs_nxt[31:1];
+        end else begin
+            regs[31:1]<='0;
+        end
     end
     for (genvar i = 1; i <= 31; i ++) begin
         always_comb begin

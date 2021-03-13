@@ -84,5 +84,5 @@ module mycpu_top (
     assign debug_wb_pc       = top.core.W.pc;
     assign debug_wb_rf_wen   = top.core.W.wen;
     assign debug_wb_rf_wnum  = top.core.W.regw;
-    assign debug_wb_rf_wdata = top.core.write_back.wd3;
+    assign debug_wb_rf_wdata = top.core.wd3;
 endmodule

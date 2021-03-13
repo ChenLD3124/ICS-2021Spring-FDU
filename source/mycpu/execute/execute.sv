@@ -33,16 +33,17 @@ module execute(
             OP_LUI: M_pre.valA=E.valB<<16;
             OP_LW: begin
                 M_pre.valA=E.valA+E.valB;
-                M_pre.rm=1;
+                M_pre.rm='1;
             end
             OP_SW: begin
                 M_pre.valA=E.valA+E.valB;
-                M_pre.wm=1;
+                M_pre.wm='1;
                 M_pre.valB=E.valC;
             end
             OP_JAL:begin
                 M_pre.valA=E.valA+E.valB;
             end
+            default:;
         endcase
     end
 endmodule

@@ -1,6 +1,7 @@
 `include "pipeline.svh"
 module decode(
     input D_type D,
+    // input i32 D_imp,
     output creg_addr_t ra1,ra2,
     input word_t rd1,rd2,
     output E_type E_pre,
@@ -11,7 +12,9 @@ module decode(
     input logic rdmem,rdmem_m,
     output logic F_st,D_st,E_bb
 );
+    i32 pc_nxt;
     always_comb begin
+        pc_nxt='0;
         F_st='0;D_st='0;E_bb='0;
         E_pre='0;
         E_pre.OP = D.imp[31:26];
@@ -108,7 +111,7 @@ module decode(
                     if (rdmem_m==1'b1) begin
                         F_st='1;D_st='1;E_bb='1;
                     end else begin
-                        E_pre.valB=regval_memory;
+                        E_pre.valC=regval_memory;
                     end
                 end
                 if(regw_execute==regw_memory)begin
@@ -126,14 +129,15 @@ module decode(
                     if (rdmem==1'b1) begin
                         F_st='1;D_st='1;E_bb='1;
                     end else begin
-                        E_pre.valB=regval_execute;
+                        E_pre.valC=regval_execute;
                     end
                 end
                 E_pre.valB=signed'(D.imp[15:0]);
             end
             OP_J,OP_JAL:begin
                 ifj=1'b1;
-                pc_decode={D.pc[31:28],D.imp[25:0],2'b00};
+                pc_nxt=D.pc+32'h4;//!!!
+                pc_decode={pc_nxt[31:28],D.imp[25:0],2'b00};
                 if(E_pre.OP==OP_JAL)begin
                     E_pre.regw=5'b11111;
                     E_pre.valA=D.pc;
@@ -141,7 +145,8 @@ module decode(
                 end
             end
             OP_BEQ,OP_BNE:begin
-                pc_decode=D.pc+signed'({D.imp[15:0],2'b00});
+                pc_nxt=signed'(D.imp[15:0]<<2);
+                pc_decode=D.pc+pc_nxt+32'h4;//!!!
                 ra1=D.imp[25:21];ra2=D.imp[20:16];
                 E_pre.valA=rd1;E_pre.valB=rd2;
                 //memory data crush

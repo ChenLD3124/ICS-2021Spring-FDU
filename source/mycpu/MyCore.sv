@@ -30,12 +30,18 @@ module MyCore (
     i5 regw_execute,regw_memory;
     i32 regval_execute,regval_memory;
     logic rdmem,rdmem_m;
+    i32 dresp_data;
+    // i32 D_imp;
     assign regval_execute = M_pre.valA;
     assign regw_execute = E.regw;
     assign regval_memory = W_pre.valA;
     assign regw_memory = M.regw;
     assign rdmem = M_pre.rm;
     assign rdmem_m = M.rm;
+    assign dresp_data = dresp.data;
+    assign EM_st = '0;
+    assign M_bb = '0;
+    // assign D_imp = resetn?iresp.data:'0;
     //module
     fetch fetch_c(.*);
     decode decode_c(.*);
@@ -44,25 +50,18 @@ module MyCore (
     write_back write_back_c(.*);
     regfile reg_c(.*);
     //
-    assign D.imp = iresp.data;
-    always_comb begin
-        
-    end
-    always_comb begin
-        if (ifj==1'b1) begin
-            F_pre.PC=pc_decode;
-        end else begin
-            F_pre.PC=pc_fetch;
-        end
-    end
-    always_ff @(posedge clk)
-    if (resetn) begin
+    assign F_pre.pc = F_st?F.pc:(ifj?pc_decode:pc_fetch);
+    assign ireq.addr = F_pre.pc;
+    assign ireq.valid = ~(F_pre.pc[0:0]|F_pre.pc[1:1]);
+    always_ff @(posedge clk) begin
+        if (resetn) begin
         // AHA!
         if (F_st!=1'b1) begin
             F<=F_pre;
+            // F_pre.pc<=
         end
         if(D_st!=1'b1) begin
-            D.pc<=D_pre.pc;
+            D<=D_pre;
         end
         if(EM_st!= 1'b1) begin
             if (E_bb==1'b1) begin
@@ -76,17 +75,19 @@ module MyCore (
                 M<=M_pre;
             end
         end
-        W<=W_pre;
-    end else begin
+            W<=W_pre;
+        end else begin
         // reset
         // NOTE: if resetn is X, it will be evaluated to false.
-        F_pre.pc<=32'hbfc00000;
+        // F_pre.pc<=32'hbfc00004;
         F<=32'hbfc00000;
-        D<='0;D_pre<='0;
-        E<='0;E_pre<='0;
-        M<='0;M_pre<='0;
-        W<='0;W_pre<='0;
+        D<='0;//D_pre<='0;
+        E<='0;//E_pre<='0;
+        M<='0;//M_pre<='0;
+        W<='0;//W_pre<='0;
+        end
     end
+    
 
     // remove following lines when you start
     // assign ireq = '0;
