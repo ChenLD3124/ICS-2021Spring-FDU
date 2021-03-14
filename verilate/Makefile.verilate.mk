@@ -21,8 +21,10 @@ SV_INCLUDES = \
 
 SV_WARNINGS = \
 	-Wall \
-	-Wno-IMPORTSTAR
+	-Wno-IMPORTSTAR \
+	-Wno-UNUSED
 	# add warnings that you wanna ignore.
+	
 
 SV_FLAGS = \
 	--cc -sv --relative-includes \

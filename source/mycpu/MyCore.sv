@@ -22,7 +22,9 @@ module MyCore (
     //wire for link regfile
     creg_addr_t ra1,ra2,wa3;
     logic write_enable;
+    /*verilator lint_off UNOPTFLAT*/
     word_t wd3,rd1,rd2;
+    /*verilator lint_off UNOPTFLAT*/
     i32 pc_decode,pc_fetch;
     logic ifj;
     logic F_st,D_st,EM_st;

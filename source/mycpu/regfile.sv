@@ -28,7 +28,8 @@ module regfile(
 
 
     // read: combinational logic
+    
     assign rd1 = (ra1 == 5'b0) ? '0 : regs_nxt[ra1]; // or regs_nxt[ra1] ?
     assign rd2 = (ra2 == 5'b0) ? '0 : regs_nxt[ra2];
-
+    
 endmodule
