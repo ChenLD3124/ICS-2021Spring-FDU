@@ -91,9 +91,9 @@ module decode(
                     end
                 end
                 if(E_pre.OP==OP_ADDIU||E_pre.OP==OP_SLTI||E_pre.OP==OP_SLTIU||E_pre.OP==OP_LW)begin
-                    E_pre.valB=signed'(D.imp[15:0]);
+                    E_pre.valB=i32'(signed'(D.imp[15:0]));
                 end else begin
-                    E_pre.valB=D.imp[15:0];
+                    E_pre.valB=i32'(D.imp[15:0]);
                 end
             end
             OP_SW:begin
@@ -132,7 +132,7 @@ module decode(
                         E_pre.valC=regval_execute;
                     end
                 end
-                E_pre.valB=signed'(D.imp[15:0]);
+                E_pre.valB=i32'(signed'(D.imp[15:0]));
             end
             OP_J,OP_JAL:begin
                 ifj=1'b1;
@@ -145,7 +145,7 @@ module decode(
                 end
             end
             OP_BEQ,OP_BNE:begin
-                pc_nxt=signed'(D.imp[15:0]<<2);
+                pc_nxt=i32'(signed'(D.imp[15:0]<<2));
                 pc_decode=D.pc+pc_nxt+32'h4;//!!!
                 ra1=D.imp[25:21];ra2=D.imp[20:16];
                 E_pre.valA=rd1;E_pre.valB=rd2;
@@ -188,6 +188,7 @@ module decode(
                     ifj=1'b1;
                 end
             end
+            default:;
         endcase
     end
 endmodule

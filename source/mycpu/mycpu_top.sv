@@ -82,7 +82,7 @@ module mycpu_top (
      * TODO (Lab1) connect debug ports :)
      */
     assign debug_wb_pc       = top.core.W.pc;
-    assign debug_wb_rf_wen   = top.core.W.wen;
+    assign debug_wb_rf_wen   = top.core.W.wen?4'b1111:4'b0000;
     assign debug_wb_rf_wnum  = top.core.W.regw;
     assign debug_wb_rf_wdata = top.core.wd3;
 endmodule

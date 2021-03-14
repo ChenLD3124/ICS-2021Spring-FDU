@@ -14,14 +14,14 @@ typedef struct packed {
 } E_type;
 typedef struct packed {
     i32 valA,valB,pc;
-    i4 rm,wm;
+    logic rm,wm;
     i5 regw;
 } M_type;
 typedef struct packed {
     i32 valA,pc;
     i5 regw;
-    i4 rm;
-    i4 wen;
+    logic rm;
+    logic wen;
 } W_type;
 // typedef logic[31:0] word_t;
 typedef logic[4:0] creg_addr_t;

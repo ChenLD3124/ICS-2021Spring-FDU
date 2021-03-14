@@ -19,8 +19,8 @@ module execute(
                     FN_OR:  M_pre.valA=E.valA|E.valB;
                     FN_XOR: M_pre.valA=E.valA^E.valB;
                     FN_NOR: M_pre.valA=~(E.valA|E.valB);
-                    FN_SLT:  M_pre.valA=signed'(E.valA)<signed'(E.valB);
-                    FN_SLTU: M_pre.valA=E.valA<E.valB;
+                    FN_SLT:  M_pre.valA=i32'(signed'(E.valA)<signed'(E.valB));
+                    FN_SLTU: M_pre.valA=i32'(E.valA<E.valB);
                     default:;
                 endcase
             end
@@ -28,8 +28,8 @@ module execute(
             OP_ORI: M_pre.valA=E.valA|E.valB;
             OP_XORI: M_pre.valA=E.valA^E.valB;
             OP_ADDIU: M_pre.valA=E.valA+E.valB;
-            OP_SLTI: M_pre.valA=signed'(E.valA)<signed'(E.valB);
-            OP_SLTIU: M_pre.valA=E.valA<E.valB;
+            OP_SLTI: M_pre.valA=i32'(signed'(E.valA)<signed'(E.valB));
+            OP_SLTIU: M_pre.valA=i32'(E.valA<E.valB);
             OP_LUI: M_pre.valA=E.valB<<16;
             OP_LW: begin
                 M_pre.valA=E.valA+E.valB;
