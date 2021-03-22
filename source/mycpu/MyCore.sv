@@ -92,7 +92,7 @@ module MyCore (
     
 
     // remove following lines when you start
-    // assign ireq = '0;
-    // assign dreq = '0;
-    // logic _unused_ok = &{iresp, dresp};
+    assign ireq = '0;
+    assign dreq = '0;
+    `UNUSED_OK({iresp, dresp});
 endmodule

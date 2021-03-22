@@ -9,7 +9,7 @@ module VTop (
 
     input i6 ext_int
 );
-    `include "cbus_decl"
+    `include "bus_decl"
 
     ibus_req_t  ireq;
     ibus_resp_t iresp;
@@ -25,7 +25,7 @@ module VTop (
     /**
      * TODO (Lab2) replace mux with your own arbiter :)
      */
-    CBusMultiplexer mux(
+    CBusArbiter mux(
         .ireqs({icreq, dcreq}),
         .iresps({icresp, dcresp}),
         .*
@@ -35,5 +35,5 @@ module VTop (
      * TODO (optional) add address translation for oreq.addr :)
      */
 
-    logic _unused_ok = &{ext_int};
+    `UNUSED_OK({ext_int});
 endmodule
