@@ -52,8 +52,16 @@ module decode(
         end
     end
     always_comb begin
+        unique case (D.imp[31:26])
+            OP_RTYPE,OP_BEQ,OP_BNE,OP_SW:begin ra1=D.imp[25:21];ra2=D.imp[20:16]; end
+            OP_ADDIU,OP_SLTI,OP_SLTIU,OP_ANDI,OP_ORI,OP_XORI,OP_LUI,OP_LW:begin
+                ra1=D.imp[25:21];ra2='0;
+            end
+            default:begin ra1='0;ra2='0; end
+        endcase
+    end
+    always_comb begin
         pc_nxt='0;
-        
         E_pre='0;
         E_pre.OP = D.imp[31:26];
         E_pre.FN = D.imp[5:0];
@@ -64,8 +72,6 @@ module decode(
         unique case (E_pre.OP)
             OP_RTYPE:begin
                 E_pre.regw=D.imp[15:11];
-                ra1=D.imp[25:21];ra2=D.imp[20:16];
-                
                 E_pre.valA=hd1;
                 E_pre.valB=hd2;
                 E_pre.sa=D.imp[10:6];
@@ -76,7 +82,6 @@ module decode(
                 end
             end
             OP_ADDIU,OP_SLTI,OP_SLTIU,OP_ANDI,OP_ORI,OP_XORI,OP_LUI,OP_LW:begin
-                ra1=D.imp[25:21];ra2='0;
                 E_pre.regw=D.imp[20:16];
                 E_pre.valA=hd1;
                 if(E_pre.OP==OP_ADDIU||E_pre.OP==OP_SLTI||E_pre.OP==OP_SLTIU||E_pre.OP==OP_LW)begin
@@ -86,13 +91,11 @@ module decode(
                 end
             end
             OP_SW:begin
-                ra1=D.imp[25:21];ra2=D.imp[20:16];
-                
                 E_pre.valA=hd1;E_pre.valC=hd2;
                 E_pre.valB=i32'(signed'(D.imp[15:0]));
             end
             OP_J,OP_JAL:begin
-                ifj=1'b1;ra1='0;ra2='0;
+                ifj=1'b1;
                 pc_nxt=D.pc+32'h4;//!!!
                 pc_decode={pc_nxt[31:28],D.imp[25:0],2'b00};
                 if(E_pre.OP==OP_JAL)begin
@@ -104,8 +107,6 @@ module decode(
             OP_BEQ,OP_BNE:begin
                 pc_nxt=i32'(signed'(D.imp[15:0]<<2));
                 pc_decode=D.pc+pc_nxt+32'h4;//!!!
-                ra1=D.imp[25:21];ra2=D.imp[20:16];
-                
                 E_pre.valA=hd1;E_pre.valB=hd2;
                 if (E_pre.valA==E_pre.valB&&E_pre.OP==OP_BEQ) begin
                     ifj=1'b1;
@@ -113,7 +114,7 @@ module decode(
                     ifj=1'b1;
                 end
             end
-            default:begin ra1='0;ra2='0; end
+            default:;
         endcase
     end
 endmodule
