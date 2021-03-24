@@ -18,6 +18,9 @@ module VTop (
     cbus_req_t  icreq,  dcreq;
     cbus_resp_t icresp, dcresp;
 
+    cbus_req_t vreq;
+    i32 paddr;
+
     MyCore core(.*);
     IBusToCBus icvt(.*);
     DBusToCBus dcvt(.*);
@@ -28,12 +31,17 @@ module VTop (
     CBusArbiter mux(
         .ireqs({icreq, dcreq}),
         .iresps({icresp, dcresp}),
+        .oreq(vreq),
         .*
     );
 
     /**
      * TODO (optional) add address translation for oreq.addr :)
      */
-
+    memtrans transinst(.vaddr(vreq.addr),.paddr(paddr));
+    always_comb begin
+        oreq=vreq;
+        oreq.addr=paddr;
+    end
     `UNUSED_OK({ext_int});
 endmodule
