@@ -10,42 +10,42 @@ module decode(
     input creg_addr_t regw_execute,regw_memory,
     input word_t regval_execute,regval_memory,
     input logic rdmem,rdmem_m,
-    output logic F_st,D_st,E_bb
+    output logic pcf1
 );
     i32 pc_nxt,hd1,hd2;
     always_comb begin
-        F_st='0;D_st='0;E_bb='0;
+        pcf1='0;
         hd1=rd1;
         hd2=rd2;
         //memory data crush
         if (ra1!=5'b0&&ra1==regw_memory) begin
-            if (rdmem_m==1'b1) begin
-                F_st='1;D_st='1;E_bb='1;
-            end else begin
+            // if (rdmem_m==1'b1) begin
+                // pcf1='1;
+            // end else begin
                 hd1=regval_memory;
-            end
+            // end
         end
         if (ra2!=5'b0&&ra2==regw_memory) begin
-            if (rdmem_m==1'b1) begin
-                F_st='1;D_st='1;E_bb='1;
-            end else begin
+            // if (rdmem_m==1'b1) begin
+                // pcf1='1;
+            // end else begin
                 hd2=regval_memory;
-            end
+            // end
         end
-        if(regw_execute==regw_memory)begin
-            F_st='0;D_st='0;E_bb='0;
-        end
+        // if(regw_execute==regw_memory)begin
+            // pcf1='0;
+        // end
         //execute data crush
         if (ra1!=5'b0&&ra1==regw_execute) begin
             if (rdmem==1'b1) begin
-                F_st='1;D_st='1;E_bb='1;
+                pcf1='1;
             end else begin
                 hd1=regval_execute;
             end
         end
         if (ra2!=5'b0&&ra2==regw_execute) begin
             if (rdmem==1'b1) begin
-                F_st='1;D_st='1;E_bb='1;
+                pcf1='1;
             end else begin
                 hd2=regval_execute;
             end
