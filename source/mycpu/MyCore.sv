@@ -18,11 +18,11 @@ module MyCore (
     D_type D,D_pre;
     E_type E,E_pre;
     M_type M,M_pre;
-    W_type W,W_pre;
+    W_type W_pre,W/* verilator public_flat_rd */;
     //wire for link regfile
     creg_addr_t ra1,ra2,wa3;
     logic write_enable;
-    word_t wd3,rd1,rd2;
+    word_t rd1,rd2,wd3/* verilator public_flat_rd */;
     i32 pc_decode,pc_fetch;
     logic ifj,pcf1,pcf2,pcf3;
     logic F_st,D_st,EM_st;
