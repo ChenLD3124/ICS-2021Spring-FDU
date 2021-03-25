@@ -18,7 +18,13 @@ module MyCore (
     D_type D,D_pre;
     E_type E,E_pre;
     M_type M,M_pre;
-    W_type W_pre,W/* verilator public_flat_rd */;
+    W_type W_pre,W;
+    i32 Dpc/* verilator public_flat_rd */;
+    logic Dwen/* verilator public_flat_rd */;
+    i5 Dwnum/* verilator public_flat_rd */;
+    assign Dpc=W.pc;  
+    assign Dwen=W.wen;
+    assign Dwnum=W.regw;
     //wire for link regfile
     creg_addr_t ra1,ra2,wa3;
     logic write_enable;
@@ -53,11 +59,8 @@ module MyCore (
     //control
     always_comb begin
         F_st='0;D_st='0;D_bb='0;E_bb='0;EM_st='0;M_bb='0;W_bb='0;
-        if (pcf1==1'b1) begin
+        if (pcf1==1'b1||pcf2==1'b1) begin
             F_st='1;D_st='1;E_bb='1;
-        end
-        if (pcf2==1'b1) begin
-            F_st='1;D_bb='1;
         end
         if (pcf3==1'b1) begin
             F_st='1;D_st='1;EM_st='1;W_bb='1;

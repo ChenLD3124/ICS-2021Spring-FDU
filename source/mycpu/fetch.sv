@@ -6,7 +6,8 @@ module fetch(
     output ibus_req_t ireq,
     output i32 pc_fetch,
     output logic pcf2,
-    input logic clk
+    input logic clk,
+    input logic resetn
 );
     logic valid,valid_nxt;
     assign D_pre.pc = F.pc;
@@ -18,6 +19,7 @@ module fetch(
     assign ireq.addr = F.pc;
     assign pcf2 =~iresp.data_ok;
     always_ff @(posedge clk) begin
+    if(resetn) begin
       if (iresp.data_ok==1'b1) begin
         valid<='1;
       end
@@ -27,6 +29,9 @@ module fetch(
       else begin
         valid<=valid_nxt;
       end
+    end else begin
+      valid<='1;
+    end
     end
     assign valid_nxt = valid;
     // assign ireq.addr=F.pc;
