@@ -18,13 +18,12 @@ module MyArbiter #(
     cbus_req_t sel_req,sel_req_l;
     assign oreq = sel_req;
     always_comb begin
+        iresps='0;
         if(lock==1'b1)begin
             sel_req=sel_req_l;
             sel=sel_l;
-            iresps[~sel]='0;
             iresps[sel]=oresp;
         end else begin
-            iresps='0;
             if(ireqs[0].valid==1'b1)begin
                 sel_req=ireqs[0];
                 sel='0;
@@ -41,7 +40,7 @@ module MyArbiter #(
         else begin
             sel_l<=sel;
             sel_req_l<=sel_req;
-            if(oresp.data_ok==1'b1)begin
+            if(oresp.last==1'b1)begin
                 lock<='0;
             end else if (oreq.valid==1'b1) begin
                 lock<='1;

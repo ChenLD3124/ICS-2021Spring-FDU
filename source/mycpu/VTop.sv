@@ -28,7 +28,8 @@ module VTop (
     /**
      * TODO (Lab2) replace mux with your own arbiter :)
      */
-    CBusArbiter mux(
+    // CBusArbiter
+    MyArbiter mux(
         .ireqs({icreq, dcreq}),
         .iresps({icresp, dcresp}),
         .oreq(vreq),
