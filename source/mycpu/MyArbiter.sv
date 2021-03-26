@@ -5,6 +5,7 @@ module MyArbiter #(
 
     localparam int MAX_INDEX = NUM_INPUTS - 1
 ) (
+    input logic resetn,clk,
     input  cbus_req_t  [MAX_INDEX:0] ireqs,
     output cbus_resp_t [MAX_INDEX:0] iresps,
     output cbus_req_t  oreq,
@@ -13,9 +14,45 @@ module MyArbiter #(
     /**
      * TODO (Lab2) your code here :)
      */
-
+    logic lock,sel,sel_l,lock_nxt;
+    cbus_req_t sel_req,sel_req_l;
+    assign oreq = sel_req;
+    always_comb begin
+        if(lock==1'b1)begin
+            sel_req=sel_req_l;
+            sel=sel_l;
+            iresps[~sel]='0;
+            iresps[sel]=oresp;
+        end else begin
+            iresps='0;
+            if(ireqs[0].valid==1'b1)begin
+                sel_req=ireqs[0];
+                sel='0;
+            end else if (ireqs[1].valid==1'b1) begin
+                sel_req=ireqs[1];
+                sel='1;
+            end else begin
+                sel_req='0;sel='1;
+            end
+        end
+    end
+    always_ff @(posedge clk) begin
+        if(~resetn)begin lock<='0;sel_l<='1;sel_req_l<=0;end
+        else begin
+            sel_l<=sel;
+            sel_req_l<=sel_req;
+            if(oresp.data_ok==1'b1)begin
+                lock<='0;
+            end else if (oreq.valid==1'b1) begin
+                lock<='1;
+            end else begin
+                lock<=lock_nxt;
+            end
+        end
+    end
+    assign lock_nxt = lock;
     // remove following lines when you start
-    assign iresps = '0;
-    assign oreq = '0;
-    `UNUSED_OK({ireqs, oresp});
+    // assign iresps = '0;
+    // assign oreq = '0;
+    // `UNUSED_OK({ireqs, oresp});
 endmodule
