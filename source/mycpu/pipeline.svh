@@ -13,6 +13,7 @@ typedef struct packed {
     i32 valA,valB,valC,pc;
 } E_type;
 typedef struct packed {
+    i6 OP,
     i32 valA,valB,pc;
     logic rm,wm;
     i5 regw;
@@ -20,7 +21,7 @@ typedef struct packed {
 typedef struct packed {
     i32 valA,pc;
     i5 regw;
-    logic rm;
+    // logic rm;
     logic wen;
 } W_type;
 // typedef logic[31:0] word_t;
@@ -82,19 +83,7 @@ typedef enum i6 {
     FN_SLT     = 6'b101010,
     FN_SLTU    = 6'b101011
 } funct_t;
-/*
-FN_SLL:
-FN_SRL:   
-FN_SRA: 
-FN_JR:
-FN_ADDU:   
-FN_SUB:
-FN_SUBU:
-FN_AND:    
-FN_OR:   
-FN_XOR:   
-FN_NOR:   
-FN_SLT:   
-FN_SLTU:
-*/
+parameter BGEZ = 5'b00001;
+parameter BLTZ = 5'b00000;
+parameter BLTZAL =5'b10000 ;
 `endif

@@ -19,22 +19,11 @@ module decode(
         hd2=rd2;
         //memory data crush
         if (ra1!=5'b0&&ra1==regw_memory) begin
-            // if (rdmem_m==1'b1) begin
-                // pcf1='1;
-            // end else begin
-                hd1=regval_memory;
-            // end
+            hd1=regval_memory;
         end
         if (ra2!=5'b0&&ra2==regw_memory) begin
-            // if (rdmem_m==1'b1) begin
-                // pcf1='1;
-            // end else begin
-                hd2=regval_memory;
-            // end
+            hd2=regval_memory;
         end
-        // if(regw_execute==regw_memory)begin
-            // pcf1='0;
-        // end
         //execute data crush
         if (ra1!=5'b0&&ra1==regw_execute) begin
             if (rdmem==1'b1) begin
@@ -52,12 +41,13 @@ module decode(
         end
     end
     always_comb begin
+        ra1='0;ra2='0;
         unique case (D.imp[31:26])
             OP_RTYPE,OP_BEQ,OP_BNE,OP_SW:begin ra1=D.imp[25:21];ra2=D.imp[20:16]; end
-            OP_ADDIU,OP_SLTI,OP_SLTIU,OP_ANDI,OP_ORI,OP_XORI,OP_LUI,OP_LW:begin
-                ra1=D.imp[25:21];ra2='0;
+            OP_ADDIU,OP_SLTI,OP_SLTIU,OP_ANDI,OP_ORI,OP_XORI,OP_LUI,OP_LW,OP_BGTZ,OP_BLEZ,OP_BTYPE:begin
+                ra1=D.imp[25:21];
             end
-            default:begin ra1='0;ra2='0; end
+            default:;
         endcase
     end
     always_comb begin
@@ -72,25 +62,30 @@ module decode(
         unique case (E_pre.OP)
             OP_RTYPE:begin
                 E_pre.regw=D.imp[15:11];
-                E_pre.valA=hd1;
-                E_pre.valB=hd2;
-                E_pre.sa=D.imp[10:6];
                 if (E_pre.FN==FN_JR) begin
-                    pc_decode=E_pre.valA;
+                    pc_decode=hd1;
                     ifj=1'b1;
-                    E_pre.sa='0;
+                end else if (E_pre.FN==FN_JALR) begin
+                    pc_decode=hd1;
+                    E_pre.valA=D.pc;
+                    E_pre.valB=32'b1000;
+                    ifj='1;
+                end else begin
+                    E_pre.valA=hd1;
+                    E_pre.valB=hd2;
+                    E_pre.sa=D.imp[10:6];
                 end
             end
-            OP_ADDIU,OP_SLTI,OP_SLTIU,OP_ANDI,OP_ORI,OP_XORI,OP_LUI,OP_LW:begin
+            OP_ADDIU,OP_SLTI,OP_SLTIU,OP_ANDI,OP_ORI,OP_XORI,OP_LUI,OP_LW,OP_LB,OP_LH,OP_LBU,OP_LHU:begin
                 E_pre.regw=D.imp[20:16];
                 E_pre.valA=hd1;
-                if(E_pre.OP==OP_ADDIU||E_pre.OP==OP_SLTI||E_pre.OP==OP_SLTIU||E_pre.OP==OP_LW)begin
+                if(E_pre.OP!=OP_ANDI&&E_pre.OP!=OP_ORI&&E_pre.OP!=OP_XORI&&E_pre.OP!=OP_LUI)begin
                     E_pre.valB=i32'(signed'(D.imp[15:0]));
                 end else begin
                     E_pre.valB=i32'(D.imp[15:0]);
                 end
             end
-            OP_SW:begin
+            OP_SW,OP_SB,OP_SH:begin
                 E_pre.valA=hd1;E_pre.valC=hd2;
                 E_pre.valB=i32'(signed'(D.imp[15:0]));
             end
@@ -113,6 +108,32 @@ module decode(
                 end else if (E_pre.valA!=E_pre.valB&&E_pre.OP==OP_BNE) begin
                     ifj=1'b1;
                 end
+            end
+            OP_BGTZ,OP_BLEZ:begin
+                pc_nxt=i32'(signed'(D.imp[15:0]<<2));
+                pc_decode=D.pc+pc_nxt+32'h4;//!!!
+                E_pre.valA=hd1;
+                if(E_pre.OP==OP_BGTZ&&E_pre.valA>0)begin
+                    ifj=1'b1;
+                end else if (E_pre.OP==OP_BLEZ&&E_pre.valA<=0) begin
+                    ifj=1'b1;
+                end
+            end
+            OP_BTYPE:begin
+                pc_nxt=i32'(signed'(D.imp[15:0]<<2));
+                pc_decode=D.pc+pc_nxt+32'h4;//!!!
+                E_pre.valC=hd1;
+                unique case (D.imp[20:16])
+                    BGEZ:begin if(E_pre.valC>=0)begin ifj='1;end end
+                    BLTZ:begin if(E_pre.valC<0)begin ifj='1;end end
+                    BLTZAL:begin
+                        if(E_pre.valC<0)begin ifj='1;end
+                        E_pre.regw=5'b11111;
+                        E_pre.valA=D.pc;
+                        E_pre.valB=32'b1000;
+                    end
+                    default:;
+                endcase
             end
             default:;
         endcase
