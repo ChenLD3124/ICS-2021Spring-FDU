@@ -13,7 +13,7 @@ typedef struct packed {
     i32 valA,valB,valC,pc;
 } E_type;
 typedef struct packed {
-    i6 OP,
+    i6 OP;
     i32 valA,valB,pc;
     logic rm,wm;
     i5 regw;
@@ -86,4 +86,5 @@ typedef enum i6 {
 parameter BGEZ = 5'b00001;
 parameter BLTZ = 5'b00000;
 parameter BLTZAL =5'b10000 ;
+parameter BGEZAL =5'b10001 ;
 `endif

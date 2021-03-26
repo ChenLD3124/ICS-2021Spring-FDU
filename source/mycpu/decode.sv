@@ -43,8 +43,9 @@ module decode(
     always_comb begin
         ra1='0;ra2='0;
         unique case (D.imp[31:26])
-            OP_RTYPE,OP_BEQ,OP_BNE,OP_SW:begin ra1=D.imp[25:21];ra2=D.imp[20:16]; end
-            OP_ADDIU,OP_SLTI,OP_SLTIU,OP_ANDI,OP_ORI,OP_XORI,OP_LUI,OP_LW,OP_BGTZ,OP_BLEZ,OP_BTYPE:begin
+            OP_RTYPE,OP_BEQ,OP_BNE,OP_SW,OP_SH,OP_SB:begin ra1=D.imp[25:21];ra2=D.imp[20:16]; end
+            OP_ADDIU,OP_SLTI,OP_SLTIU,OP_ANDI,OP_ORI,OP_XORI,OP_LUI,OP_LW,
+                OP_BGTZ,OP_BLEZ,OP_BTYPE,OP_LB,OP_LBU,OP_LH,OP_LHU:begin
                 ra1=D.imp[25:21];
             end
             default:;
@@ -113,9 +114,9 @@ module decode(
                 pc_nxt=i32'(signed'(D.imp[15:0]<<2));
                 pc_decode=D.pc+pc_nxt+32'h4;//!!!
                 E_pre.valA=hd1;
-                if(E_pre.OP==OP_BGTZ&&E_pre.valA>0)begin
+                if(E_pre.OP==OP_BGTZ&&signed'(E_pre.valA)>0)begin
                     ifj=1'b1;
-                end else if (E_pre.OP==OP_BLEZ&&E_pre.valA<=0) begin
+                end else if (E_pre.OP==OP_BLEZ&&signed'(E_pre.valA)<=0) begin
                     ifj=1'b1;
                 end
             end
@@ -124,10 +125,11 @@ module decode(
                 pc_decode=D.pc+pc_nxt+32'h4;//!!!
                 E_pre.valC=hd1;
                 unique case (D.imp[20:16])
-                    BGEZ:begin if(E_pre.valC>=0)begin ifj='1;end end
-                    BLTZ:begin if(E_pre.valC<0)begin ifj='1;end end
-                    BLTZAL:begin
-                        if(E_pre.valC<0)begin ifj='1;end
+                    BGEZ:begin if(signed'(E_pre.valC)>=0)begin ifj='1;end end
+                    BLTZ:begin if(signed'(E_pre.valC)<0)begin ifj='1;end end
+                    BLTZAL,BGEZAL:begin
+                        if(D.imp[20:16]==BLTZAL&&signed'(E_pre.valC)<0)begin ifj='1;end
+                        else if(D.imp[20:16]==BGEZAL&&signed'(E_pre.valC)>=0)begin ifj='1;end
                         E_pre.regw=5'b11111;
                         E_pre.valA=D.pc;
                         E_pre.valB=32'b1000;

@@ -40,17 +40,17 @@ module memory(
               OP_LH,OP_LHU:begin
                 dreq.size=MSIZE2;
                 tmp=int'(M.valA[1:1])<<4;
-                W_pre.valA=(32'hffff<<tmp)&dresp.data;
-                if(M.OP==OP_LHU)begin
-                  W_pre.valA=signed'((W_pre.valA)<<(16-tmp))>>>(16-tmp);
+                W_pre.valA=(dresp.data>>tmp)&32'hffff;
+                if(M.OP==OP_LH)begin
+                  W_pre.valA=signed'(W_pre.valA<<16)>>>16;
                 end
               end
               OP_LB,OP_LBU:begin
                 dreq.size=MSIZE1;
                 tmp=int'(M.valA[1:0])<<3;
-                W_pre.valA=(32'hff<<tmp)&dresp.data;
-                if(M.OP==OP_LBU)begin
-                  W_pre.valA=signed'(W_pre.valA<<(24-tmp))>>>(24-tmp);
+                W_pre.valA=(dresp.data>>tmp)&32'hff;
+                if(M.OP==OP_LB)begin
+                  W_pre.valA=signed'(W_pre.valA<<24)>>>24;
                 end
               end
               default:;
@@ -74,6 +74,7 @@ module memory(
                 dreq.strobe=4'h3<<M.valA[1:0];
                 dreq.data=M.valB<<(int'(M.valA[1:0])<<3);
               end
+              default:;
             endcase
             
         end else begin

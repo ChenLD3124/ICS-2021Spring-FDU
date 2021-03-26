@@ -22,7 +22,7 @@ module execute(
                     FN_NOR: M_pre.valA=~(E.valA|E.valB);
                     FN_SLT:  M_pre.valA=i32'(signed'(E.valA)<signed'(E.valB));
                     FN_SLTU: M_pre.valA=i32'(E.valA<E.valB);
-                    FN_SLLV: M_pre.valA=M_pre.valA=E.valB<<E.valA[4:0];
+                    FN_SLLV: M_pre.valA=E.valB<<E.valA[4:0];
                     FN_SRAV: M_pre.valA=signed'(E.valB)>>>E.valA[4:0];
                     FN_SRLV: M_pre.valA=E.valB>>E.valA[4:0];
                     default:;
