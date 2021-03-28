@@ -1,3 +1,4 @@
+`include "pipeline.svh"
 module hilo (
     input logic clk,resetn,
     output i32 hi, lo,

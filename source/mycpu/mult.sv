@@ -1,4 +1,5 @@
-module multiplier_multicycle_from_single (
+`include "pipeline.svh"
+module mult (
     input logic clk, resetn, valid,
     input i32 a, b,
     output logic done, // 握手信号，done 上升沿时的输出是有效的
@@ -6,7 +7,7 @@ module multiplier_multicycle_from_single (
 );
     enum i1 { INIT, DOING } state, state_nxt;
     i35 count, count_nxt;
-    localparam i35 MULT_DELAY = {'0, 1'b1, 32'b0};
+    localparam i35 MULT_DELAY = {2'b0, 1'b1, 32'b0};
     always_ff @(posedge clk) begin
         if (~resetn) begin
             {state, count} <= '0;
@@ -37,7 +38,7 @@ module multiplier_multicycle_from_single (
         p_nxt = p;
         unique case(state)
             INIT: begin
-                p_nxt = {'0, a};
+                p_nxt = {33'b0, a};
             end
             DOING: begin
                 if (p_nxt[0]) begin

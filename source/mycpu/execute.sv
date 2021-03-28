@@ -7,12 +7,12 @@ module execute(
 );
     logic valid_m,done_m,valid_d,done_d;
     i32 a,b;
-    i64 c_m,c_d;
+    i64 c_m,c_d,tmp;
     assign pcf4 = (valid_m&(~done_m))|(valid_d&(~done_d));
-    multiplier_multicycle_from_single mult_c(.done(done_m),.valid(valid_m),.c(c_m),.*);
-    divider_multicycle_from_single div_c(.done(done_d),.valid(valid_d),.c(c_d),.*);
+    mult mult_c(.done(done_m),.valid(valid_m),.c(c_m),.*);
+    div div_c(.done(done_d),.valid(valid_d),.c(c_d),.*);
     always_comb begin
-        a='0;b='0;
+        a='0;b='0;tmp='0;
         M_pre='0;valid_m='0;valid_d='0;
         M_pre.OP=E.OP;
         {M_pre.hi_r,M_pre.hi_w,M_pre.lo_r,M_pre.lo_w}={E.hi_r,E.hi_w,E.lo_r,E.lo_w};
@@ -49,8 +49,9 @@ module execute(
                         b=E.valB[31]?((~E.valB)+32'b1):E.valB;
                         valid_m='1;
                         if(E.valA[31]^E.valB[31]==1'b1)begin
-                            M_pre.valA=((~c_m)+64'b1)[63:32];
-                            M_pre.valB=((~c_m)+64'b1)[31:0];
+                            tmp=(~c_m)+64'b1;
+                            M_pre.valA=tmp[63:32];
+                            M_pre.valB=tmp[31:0];
                         end else begin
                             M_pre.valA=c_m[63:32];
                             M_pre.valB=c_m[31:0];
@@ -72,7 +73,7 @@ module execute(
                         b=E.valB[31]?((~E.valB)+32'b1):E.valB;
                         valid_d='1;
                         if(E.valA[31]^E.valB[31]==1'b1)begin
-                            if(E.valA[31]==1'b1)begin
+                            if(E.valA[31]!=1'b1)begin
                                 M_pre.valA=c_d[63:32];
                                 M_pre.valB=(~c_d[31:0])+32'b1;
                             end else begin
@@ -80,9 +81,11 @@ module execute(
                                 M_pre.valB=(~c_d[31:0])+32'b1;
                             end
                         end else begin
-                            M_pre.valA=c_d[63:32];
+                            M_pre.valA=E.valA[31]?((~c_d[63:32])+32'b1):c_d[63:32];
                             M_pre.valB=c_d[31:0];
                         end
+                        M_pre.hi_w='1;
+                        M_pre.lo_w='1;
                     end
                     default:begin M_pre.valA=E.valA;M_pre.valB=E.valB;end
                 endcase
