@@ -11,18 +11,19 @@ typedef struct packed {
     i6 OP,FN;
     i5 regw,sa;
     i32 valA,valB,valC,pc;
+    logic hi_r,hi_w,lo_r,lo_w;
 } E_type;
 typedef struct packed {
     i6 OP;
     i32 valA,valB,pc;
-    logic rm,wm;
+    logic rm,wm,hi_r,hi_w,lo_r,lo_w;
     i5 regw;
 } M_type;
 typedef struct packed {
-    i32 valA,pc;
+    i32 valA,valB,pc;
     i5 regw;
     // logic rm;
-    logic wen;
+    logic wen,hi_r,hi_w,lo_r,lo_w;
 } W_type;
 // typedef logic[31:0] word_t;
 typedef logic[4:0] creg_addr_t;

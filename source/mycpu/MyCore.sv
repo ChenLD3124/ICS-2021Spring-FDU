@@ -28,9 +28,9 @@ module MyCore (
     //wire for link regfile
     creg_addr_t ra1,ra2,wa3;
     logic write_enable;
-    word_t rd1,rd2,wd3/* verilator public_flat_rd */;
+    word_t hi,lo,rd1,rd2,wd3/* verilator public_flat_rd */;
     i32 pc_decode,pc_fetch;
-    logic ifj,pcf1,pcf2,pcf3;
+    logic ifj,pcf1,pcf2,pcf3,pcf4;
     logic F_st,D_st,EM_st;
     logic D_bb,E_bb,M_bb,W_bb;
     i5 regw_execute,regw_memory;
@@ -51,6 +51,7 @@ module MyCore (
     memory memory_c(.*);
     write_back write_back_c(.*);
     regfile reg_c(.*);
+    hilo hilo_c(.*);
     //
     // assign F_pre.pc = F_st?F.pc:(ifj?pc_decode:pc_fetch);
     assign F_pre.pc = ifj?pc_decode:pc_fetch;
@@ -62,7 +63,7 @@ module MyCore (
         if (pcf1==1'b1||pcf2==1'b1) begin
             F_st='1;D_st='1;E_bb='1;
         end
-        if (pcf3==1'b1) begin
+        if (pcf3==1'b1||pcf4==1'b1) begin
             F_st='1;D_st='1;EM_st='1;W_bb='1;
         end
     end

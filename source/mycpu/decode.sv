@@ -63,19 +63,37 @@ module decode(
         unique case (E_pre.OP)
             OP_RTYPE:begin
                 E_pre.regw=D.imp[15:11];
-                if (E_pre.FN==FN_JR) begin
-                    pc_decode=hd1;
-                    ifj=1'b1;
-                end else if (E_pre.FN==FN_JALR) begin
-                    pc_decode=hd1;
-                    E_pre.valA=D.pc;
-                    E_pre.valB=32'b1000;
-                    ifj='1;
-                end else begin
-                    E_pre.valA=hd1;
-                    E_pre.valB=hd2;
-                    E_pre.sa=D.imp[10:6];
-                end
+                unique case (D.imp[5:0])
+                    FN_MTHI:begin
+                        E_pre.hi_w='1;
+                        E_pre.valA=hd1;
+                    end
+                    FN_MTLO:begin
+                        E_pre.lo_w='1;
+                        E_pre.valB=hd1;
+                    end
+                    FN_MFHI:begin
+                        E_pre.hi_r='1;
+                    end
+                    FN_MFLO:begin
+                        E_pre.lo_r='1;
+                    end
+                    FN_JR:begin
+                        pc_decode=hd1;
+                        ifj=1'b1;
+                    end
+                    FN_JALR:begin
+                        pc_decode=hd1;
+                        E_pre.valA=D.pc;
+                        E_pre.valB=32'b1000;
+                        ifj='1;
+                    end
+                    default:begin
+                        E_pre.valA=hd1;
+                        E_pre.valB=hd2;
+                        E_pre.sa=D.imp[10:6];
+                    end
+                endcase
             end
             OP_ADDIU,OP_SLTI,OP_SLTIU,OP_ANDI,OP_ORI,OP_XORI,OP_LUI,OP_LW,OP_LB,OP_LH,OP_LBU,OP_LHU:begin
                 E_pre.regw=D.imp[20:16];

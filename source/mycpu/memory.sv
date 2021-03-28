@@ -27,6 +27,7 @@ module memory(
         dreq.valid = (M.rm|M.wm)?valid:'0;
         W_pre='0;tmp='0;
         W_pre.pc=M.pc;
+        {W_pre.hi_r,W_pre.hi_w,W_pre.lo_r,W_pre.lo_w}={M.hi_r,M.hi_w,M.lo_r,M.lo_w};
         if(M.rm) begin
             dreq.addr=M.valA;
             W_pre.regw=M.regw;
@@ -80,6 +81,7 @@ module memory(
         end else begin
             W_pre.regw=M.regw;
             W_pre.valA=M.valA;
+            W_pre.valB=M.valB;
             if (W_pre.regw!=5'b0) begin
                 W_pre.wen='1;
             end
