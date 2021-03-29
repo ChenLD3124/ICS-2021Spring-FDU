@@ -83,6 +83,6 @@ module mycpu_top (
      */
     assign debug_wb_pc       = top.core.Dpc;
     assign debug_wb_rf_wen   = top.core.Dwen?4'b1111:4'b0000;
-    assign debug_wb_rf_wnum  = top.core.Dregw;
+    assign debug_wb_rf_wnum  = top.core.Dwnum;
     assign debug_wb_rf_wdata = top.core.wd3;
 endmodule
