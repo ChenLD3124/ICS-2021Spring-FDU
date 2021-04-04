@@ -34,15 +34,19 @@ module MyCore (
     logic F_st,D_st,EM_st;
     logic D_bb,E_bb,M_bb,W_bb;
     i5 regw_execute,regw_memory;
-    i32 regval_execute,regval_memory;
+    i32 regval_execute,regval_memory,regval_elo,regval_mlo;
     logic rdmem,rdmem_m;
     i32 dresp_data;
+    logic e_hi,e_lo,m_hi,m_lo;
     assign regval_execute = M_pre.valA;
     assign regw_execute = E.regw;
     assign regval_memory = W_pre.valA;
     assign regw_memory = M.regw;
     assign rdmem = M_pre.rm;
     assign rdmem_m = M.rm;
+    assign {e_hi,e_lo,m_hi,m_lo} = {M_pre.hi_w,M_pre.lo_w,M.hi_w,M.lo_w};
+    assign regval_elo = M_pre.valB;
+    assign regval_mlo = W_pre.valB;
     // assign dresp_data = W_pre.valA;
     //module
     fetch fetch_c(.*);

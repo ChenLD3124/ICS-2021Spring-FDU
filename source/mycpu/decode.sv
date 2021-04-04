@@ -10,9 +10,14 @@ module decode(
     input creg_addr_t regw_execute,regw_memory,
     input word_t regval_execute,regval_memory,
     input logic rdmem,rdmem_m,
-    output logic pcf1
+    output logic pcf1,
+    input i32 hi,lo,
+    input logic e_hi,e_lo,m_hi,m_lo,
+    input i32 regval_elo,regval_mlo
 );
-    i32 pc_nxt,hd1,hd2;
+    i32 pc_nxt,hd1,hd2,hd3,hd4;
+    assign hd3 = e_hi?regval_execute:(m_hi?regval_memory:hi);
+    assign hd4 = e_lo?regval_elo:(m_lo?regval_mlo:lo);
     always_comb begin
         pcf1='0;
         hd1=rd1;
@@ -73,10 +78,10 @@ module decode(
                         E_pre.valB=hd1;
                     end
                     FN_MFHI:begin
-                        E_pre.hi_r='1;
+                        E_pre.valA=hd3;
                     end
                     FN_MFLO:begin
-                        E_pre.lo_r='1;
+                        E_pre.valA=hd4;
                     end
                     FN_JR:begin
                         pc_decode=hd1;

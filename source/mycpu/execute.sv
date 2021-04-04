@@ -15,7 +15,7 @@ module execute(
         a='0;b='0;tmp='0;
         M_pre='0;valid_m='0;valid_d='0;
         M_pre.OP=E.OP;
-        {M_pre.hi_r,M_pre.hi_w,M_pre.lo_r,M_pre.lo_w}={E.hi_r,E.hi_w,E.lo_r,E.lo_w};
+        {M_pre.hi_w,M_pre.lo_w}={E.hi_w,E.lo_w};
         M_pre.regw=E.regw;
         M_pre.pc=E.pc;
         unique case (E.OP)

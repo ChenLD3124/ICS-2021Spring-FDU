@@ -5,13 +5,13 @@ module write_back(
     output word_t wd3,
     output creg_addr_t wa3,
     output logic write_enable,
-    input i32 hi,lo,
+    // input i32 hi,lo,
     output i1 hi_write, lo_write,
     output i32 hi_data, lo_data
 );
     assign wa3=W.regw;
     // assign wd3 = W.rm?dresp_data:W.valA;
-    assign wd3 = W.hi_r?hi:(W.lo_r?lo:W.valA);
+    assign wd3 = W.valA;
     assign write_enable=W.wen;
     assign hi_write = W.hi_w;
     assign lo_write = W.lo_w;
