@@ -28,7 +28,7 @@ module MyCore (
     //wire for link regfile
     creg_addr_t ra1,ra2,wa3;
     logic write_enable,hi_write,lo_write;
-    word_t hi,lo,hi_data,lo_data,rd1,rd2,wd3/* verilator public_flat_rd */;
+    word_t hi_new,lo_new,hi_data,lo_data,rd1,rd2,wd3/* verilator public_flat_rd */;
     i32 pc_decode,pc_fetch;
     logic ifj,pcf1,pcf2,pcf3,pcf4;
     logic F_st,D_st,EM_st;

@@ -11,7 +11,7 @@ module decode(
     input word_t regval_execute,regval_memory,
     input logic rdmem,rdmem_m,
     output logic pcf1,
-    input i32 hi,lo,
+    input i32 hi_new,lo_new,
     input logic e_hi,e_lo,m_hi,m_lo,
     input i32 regval_elo,regval_mlo
 );
