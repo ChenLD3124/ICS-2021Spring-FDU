@@ -16,8 +16,8 @@ module decode(
     input i32 regval_elo,regval_mlo
 );
     i32 pc_nxt,hd1,hd2,hd3,hd4;
-    assign hd3 = e_hi?regval_execute:(m_hi?regval_memory:hi);
-    assign hd4 = e_lo?regval_elo:(m_lo?regval_mlo:lo);
+    assign hd3 = e_hi?regval_execute:(m_hi?regval_memory:hi_new);
+    assign hd4 = e_lo?regval_elo:(m_lo?regval_mlo:lo_new);
     always_comb begin
         pcf1='0;
         hd1=rd1;
