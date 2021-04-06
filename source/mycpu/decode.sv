@@ -125,7 +125,7 @@ module decode(
             end
             OP_BEQ,OP_BNE:begin
                 // pc_nxt=i32'(signed'(D.imp[15:0]<<2));
-                pc_nxt={14{D.imp[15]},D.imp[15:0],2'b00};
+                pc_nxt={{14{D.imp[15]}},D.imp[15:0],2'b00};
                 pc_decode=D.pc+pc_nxt+32'h4;//!!!
                 E_pre.valA=hd1;E_pre.valB=hd2;
                 if (E_pre.valA==E_pre.valB&&E_pre.OP==OP_BEQ) begin
@@ -136,7 +136,7 @@ module decode(
             end
             OP_BGTZ,OP_BLEZ:begin
                 // pc_nxt=i32'(signed'(D.imp[15:0]<<2));
-                pc_nxt={14{D.imp[15]},D.imp[15:0],2'b00};
+                pc_nxt={{14{D.imp[15]}},D.imp[15:0],2'b00};
                 pc_decode=D.pc+pc_nxt+32'h4;//!!!
                 E_pre.valA=hd1;
                 if(E_pre.OP==OP_BGTZ&&signed'(E_pre.valA)>0)begin
@@ -147,7 +147,7 @@ module decode(
             end
             OP_BTYPE:begin
                 // pc_nxt=i32'(signed'(D.imp[15:0]<<2));
-                pc_nxt={14{D.imp[15]},D.imp[15:0],2'b00};
+                pc_nxt={{14{D.imp[15]}},D.imp[15:0],2'b00};
                 pc_decode=D.pc+pc_nxt+32'h4;//!!!
                 E_pre.valC=hd1;
                 unique case (D.imp[20:16])
