@@ -64,7 +64,7 @@ WITH {
 } AS("fake store");
 
 // both dbus->store and dbus->load wait for your model to complete
-WITH {
+WITH TRACE{
     dbus->store(0, MSIZE4, 0b1111, 0x2048ffff);
     ASSERT(dbus->load(0, MSIZE4) == 0x2048ffff);
 } AS("naive");

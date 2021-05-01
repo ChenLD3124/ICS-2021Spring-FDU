@@ -17,7 +17,7 @@ module DCache (
         READY,
         FLUSH
     } state_t;
-    typedef i4 offset_t;
+    typedef i2 offset_t;
     state_t state;
     offset_t offset,start;
     dbus_req_t req;
@@ -26,16 +26,16 @@ module DCache (
         strobe_t strobe;
         word_t wdata;
     } ram;
-    logic [1:0][1:0] ram_en,cp,cp_nxt;
+    logic [3:0][3:0] ram_en;
+    logic [3:0][1:0] cp,cp_nxt;
     i2 csn;
-    word_t [1:0][1:0] ram_rdata;
+    word_t [3:0][3:0] ram_rdata;
     
     typedef struct packed {
         logic valid,dirty,now;
         logic [25:0] index;
     } cache_line;
-    cache_line [1:0][1:0] ca,ca_nxt;
-    i2 [1:0] found;
+    cache_line [3:0][3:0] ca,ca_nxt;
     //cache set number
     assign csn = req.addr[5:4];
     // DBus driver
@@ -43,17 +43,17 @@ module DCache (
     assign dresp.data_ok = state == READY;
     assign dresp.data    = ram_rdata[csn][hit_num_r];
     // CBus driver
-    assign creq.valid    = state == FETCH || state == FLUSH;
-    assign creq.is_write = state == FLUSH;
-    assign creq.size     = MSIZE4;
-    assign creq.addr     = req.addr;
-    assign creq.strobe   = 4'b1111;
-    assign creq.data     = ram_rdata[csn][hit_num_r];
-    assign creq.len      = MLEN4;
+    assign dcreq.valid    = state == FETCH || state == FLUSH;
+    assign dcreq.is_write = state == FLUSH;
+    assign dcreq.size     = MSIZE4;
+    assign dcreq.addr     = req.addr;
+    assign dcreq.strobe   = 4'b1111;
+    assign dcreq.data     = ram_rdata[csn][hit_num_r];
+    assign dcreq.len      = MLEN4;
     logic hit,dirt;
     logic [1:0] hit_num,hit_num_r;
     for (genvar i = 0; i < 16; i++) begin
-        LUTRAM ram_line(
+        LUTRAM #(.NUM_BYTES(16)) ram_line(
             .clk(clk), .en(ram_en[i[3:2]][i[1:0]]),
             .addr(offset),
             .strobe(ram.strobe),
@@ -66,31 +66,36 @@ module DCache (
         ca_nxt=ca;cp_nxt=cp;
         unique case (state)
             IDLE:begin
-                for (int i=0; i<4; ++i) begin
-                    if(ca[dreq.addr[3:2]][i].valid&&ca[dreq.addr[3:2]][i].index==dreq[31:6])begin
-                        hit='1;hit_num=i;
-                        ca_nxt[dreq.addr[3:2]][i].now='1;
-                    end
-                end
-                if(hit=1'b0)begin
-                    for (int i=0; i<5; ++i) begin
-                        if(ca_nxt[dreq.addr[3:2]][i2'(i+cp[dreq[3:2]])].now)begin
-                            ca_nxt[dreq.addr[3:2]][i2'(i+cp[dreq[3:2]])].now='0;
-                        end
-                        else begin
-                            hit_num=i+cp[dreq[3:2]];
-                            cp_nxt[dreq[3:2]]=hit_num+1;
-                            break;
+                if (dreq.valid) begin
+                    for (int i=0; i<4; ++i) begin
+                        if(ca[dreq.addr[5:4]][i].valid&&ca[dreq.addr[5:4]][i].index==dreq.addr[31:6])begin
+                            hit='1;hit_num=i[1:0];
+                            ca_nxt[dreq.addr[5:4]][i].now='1;
                         end
                     end
-                    dirt=ca[dreq.addr[3:2]][hit_num].dirty;
+                    if(hit==1'b0)begin
+                        for (int i=0; i<5; ++i) begin
+                            /* verilator lint_off WIDTH */
+                            if(ca_nxt[dreq.addr[5:4]][i[1:0]+cp[dreq.addr[5:4]]].now)begin
+                                ca_nxt[dreq.addr[5:4]][i[1:0]+cp[dreq.addr[5:4]]].now='0;
+                            end
+                            /* verilator lint_off WIDTH */
+                            else begin
+                                hit_num=i[1:0]+cp[dreq.addr[5:4]];
+                                cp_nxt[dreq.addr[5:4]]=i2'(hit_num+1);
+                                break;
+                            end
+                        end
+                        dirt=ca[dreq.addr[5:4]][hit_num].dirty;
+                    end
                 end
+                    
             end
             READY:begin
                 ram_en[csn][hit_num_r]='1;
                 ram.strobe=req.strobe;
                 ram.wdata=req.data;
-                if(|ram.strobe)begin
+                if(ram.strobe!=4'b0000)begin
                     ca_nxt[csn][hit_num_r].dirty='1;
                     ca_nxt[csn][hit_num_r].now='1;
                 end 
@@ -98,13 +103,14 @@ module DCache (
             FETCH:begin
                 ram_en[csn][hit_num_r]='1;
                 ram.strobe = 4'b1111;
-                ram.wdata  = cresp.data;
+                ram.wdata  = dcresp.data;
                 ca_nxt[csn][hit_num_r].dirty='0;
                 ca_nxt[csn][hit_num_r].valid='1;
                 ca_nxt[csn][hit_num_r].now='1;
+                ca_nxt[csn][hit_num_r].index=req.addr[31:6];
             end
             FLUSH:begin
-                if(cresp.ready&&cresp.last) ca_nxt[csn][hit_num_r].dirty='0;
+                if(dcresp.ready&&dcresp.last) ca_nxt[csn][hit_num_r].dirty='0;
             end
         endcase
     end
@@ -114,25 +120,28 @@ module DCache (
             cp<=cp_nxt;
             unique case (state)
                 IDLE:begin
-                    if(hit) state<=READY;
-                    else if(dirt) state<=FLUSH;
-                    else state<=FETCH;
-                    req<=dreq;
-                    offset<=start;
-                    hit_num_r<=hit_num;
+                    if (dreq.valid) begin
+                        if(hit) state<=READY;
+                        else if(dirt) state<=FLUSH;
+                        else state<=FETCH;
+                        req<=dreq;
+                        offset<=start;
+                        hit_num_r<=hit_num;
+                    end
+                    
                 end
                 READY:begin
                     state<=IDLE;
                 end
                 FETCH:begin
-                    if (cresp.ready) begin
-                        state  <= cresp.last ? READY : FETCH;
+                    if (dcresp.ready) begin
+                        state  <= dcresp.last ? READY : FETCH;
                         offset <= offset + 1;
                     end
                 end
                 FLUSH:begin
-                    if (cresp.ready) begin
-                        state  <= cresp.last ? FETCH : FLUSH;
+                    if (dcresp.ready) begin
+                        state  <= dcresp.last ? FETCH : FLUSH;
                         offset <= offset + 1;
                     end
                 end
