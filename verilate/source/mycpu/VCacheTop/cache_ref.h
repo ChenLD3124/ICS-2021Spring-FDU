@@ -25,7 +25,14 @@ private:
      *
      * NOTE: you can use BlockMemory, or replace it with anything you like.
      */
-
-    // int state;
+    enum {IDLE,FETCH,READY,FLUSH} state;
+    word_t buffer[4][4][4];
+    struct cache_line{
+        bool valid,dirty,now;
+        int index;
+    }ca[4][4];
+    int cp[4];
+    int csn,hit_num_r;
+    bool hit;
     BlockMemory mem;
 };

@@ -52,7 +52,7 @@ module DCache (
     assign dcreq.len      = MLEN4;
     logic hit,dirt;
     logic [1:0] hit_num,hit_num_r;
-    for (genvar i = 0; i < 16; i++) begin
+    for (genvar i = 0; i < 16; i++) begin:cl
         LUTRAM #(.NUM_BYTES(16)) ram_line(
             .clk(clk), .en(ram_en[i[3:2]][i[1:0]]),
             .addr(offset),

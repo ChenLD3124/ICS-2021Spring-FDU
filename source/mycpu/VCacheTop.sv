@@ -35,13 +35,13 @@ module VCacheTop (
      * later you can access the variable mem from C++ via VCacheTop->mem.
      * it will possibly become a 1d array of uint32_t.
      */
-    // typedef word_t [15:0] cache_line_t;
+    typedef word_t [3:0] cache_line_t;
     //
-    // /* verilator tracing_off */
-    // cache_line_t [3:0] mem /* verilator public_flat_rd */;
-    // /* verilator tracing_on */
+    /* verilator tracing_off */
+    cache_line_t [3:0][3:0] mem /* verilator public_flat_rd */;
+    /* verilator tracing_on */
     //
-    // for (genvar i = 0; i < 4; i++) begin
-    //     assign mem[i] = top.xxx.yyy.zzz.lutrams[i].ram_inst.behavioral.mem;
-    // end
+    for (genvar i = 0; i < 16; i++) begin
+        assign mem[i[3:2]][i[1:0]] = top.cl[i].ram_line.behavioral.mem;
+    end
 endmodule
