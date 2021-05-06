@@ -303,7 +303,7 @@ WITH CMP_TO(ref) {
     }
 } AS("cmp: byte");
 
-WITH CMP_TO(ref) DEBUG TRACE{
+WITH CMP_TO(ref)  {
     constexpr int T = 65536;
     for (int i = 0; i < T; i++) {
         addr_t addr = randi<addr_t>(0, MEMORY_SIZE / 8) * 4;  // random address within 512 KiB region
