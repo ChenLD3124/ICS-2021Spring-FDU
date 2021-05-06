@@ -36,12 +36,24 @@ module VCacheTop (
      * it will possibly become a 1d array of uint32_t.
      */
     typedef word_t [3:0] cache_line_t;
+    
+    
     //
     /* verilator tracing_off */
     cache_line_t [3:0][3:0] mem /* verilator public_flat_rd */;
+    word_t [3:0][3:0][3:0] can/* verilator public_flat_rd */;
+    word_t [3:0] cpn/* verilator public_flat_rd */;
     /* verilator tracing_on */
     //
     for (genvar i = 0; i < 16; i++) begin
         assign mem[i[3:2]][i[1:0]] = top.cl[i].ram_line.behavioral.mem;
+        assign can[i[3:2]][i[1:0]][0] = {31'b0,top.ca[i[3:2]][i[1:0]].valid};
+        assign can[i[3:2]][i[1:0]][1] = {31'b0,top.ca[i[3:2]][i[1:0]].dirty};
+        assign can[i[3:2]][i[1:0]][2] = {31'b0,top.ca[i[3:2]][i[1:0]].now};
+        assign can[i[3:2]][i[1:0]][3] = {top.ca[i[3:2]][i[1:0]].index,6'b0};
     end
+    for (genvar i = 0; i < 4; i++) begin
+        assign cpn[i] = {30'b0,top.cp[i]};
+    end
+    
 endmodule

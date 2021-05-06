@@ -32,7 +32,7 @@ private:
         int index;
     }ca[4][4];
     int cp[4];
-    int csn,hit_num_r;
+    int csn,hit_num;
     bool hit;
     BlockMemory mem;
 };

@@ -28,7 +28,7 @@ module DCache (
     } ram;
     logic [3:0][3:0] ram_en;
     logic [3:0][1:0] cp,cp_nxt;
-    i2 csn;
+    i2 csn,F_offset;
     word_t [3:0][3:0] ram_rdata;
     
     typedef struct packed {
@@ -46,11 +46,12 @@ module DCache (
     assign dcreq.valid    = state == FETCH || state == FLUSH;
     assign dcreq.is_write = state == FLUSH;
     assign dcreq.size     = MSIZE4;
-    assign dcreq.addr     = req.addr;
+    assign dcreq.addr     = (state == FLUSH)?{ca[csn][hit_num_r].index,csn,F_offset,2'b0}:req.addr;
     assign dcreq.strobe   = 4'b1111;
     assign dcreq.data     = ram_rdata[csn][hit_num_r];
     assign dcreq.len      = MLEN4;
     logic hit,dirt;
+    // addr_t F_addr;
     logic [1:0] hit_num,hit_num_r;
     for (genvar i = 0; i < 16; i++) begin:cl
         LUTRAM #(.NUM_BYTES(16)) ram_line(
@@ -70,19 +71,17 @@ module DCache (
                     for (int i=0; i<4; ++i) begin
                         if(ca[dreq.addr[5:4]][i].valid&&ca[dreq.addr[5:4]][i].index==dreq.addr[31:6])begin
                             hit='1;hit_num=i[1:0];
-                            ca_nxt[dreq.addr[5:4]][i].now='1;
+                            break;
                         end
                     end
                     if(hit==1'b0)begin
                         for (int i=0; i<5; ++i) begin
-                            /* verilator lint_off WIDTH */
-                            if(ca_nxt[dreq.addr[5:4]][i[1:0]+cp[dreq.addr[5:4]]].now)begin
-                                ca_nxt[dreq.addr[5:4]][i[1:0]+cp[dreq.addr[5:4]]].now='0;
+                            hit_num=i2'(i[1:0]+cp[dreq.addr[5:4]]);
+                            if(ca_nxt[dreq.addr[5:4]][hit_num].now)begin
+                                ca_nxt[dreq.addr[5:4]][hit_num].now='0;
                             end
-                            /* verilator lint_off WIDTH */
                             else begin
-                                hit_num=i[1:0]+cp[dreq.addr[5:4]];
-                                cp_nxt[dreq.addr[5:4]]=i2'(hit_num+1);
+                                cp_nxt[dreq.addr[5:4]]=i2'(hit_num+2'b01);
                                 break;
                             end
                         end
@@ -95,9 +94,9 @@ module DCache (
                 ram_en[csn][hit_num_r]='1;
                 ram.strobe=req.strobe;
                 ram.wdata=req.data;
+                ca_nxt[csn][hit_num_r].now='1;
                 if(ram.strobe!=4'b0000)begin
                     ca_nxt[csn][hit_num_r].dirty='1;
-                    ca_nxt[csn][hit_num_r].now='1;
                 end 
             end
             FETCH:begin
@@ -106,7 +105,6 @@ module DCache (
                 ram.wdata  = dcresp.data;
                 ca_nxt[csn][hit_num_r].dirty='0;
                 ca_nxt[csn][hit_num_r].valid='1;
-                ca_nxt[csn][hit_num_r].now='1;
                 ca_nxt[csn][hit_num_r].index=req.addr[31:6];
             end
             FLUSH:begin
@@ -124,9 +122,11 @@ module DCache (
                         if(hit) state<=READY;
                         else if(dirt) state<=FLUSH;
                         else state<=FETCH;
+                        // F_addr<={ca[dreq.addr[5:4]][hit_num].index,dreq.addr[5:4],2'b00};
                         req<=dreq;
                         offset<=start;
                         hit_num_r<=hit_num;
+                        F_offset<=start;
                     end
                     
                 end
