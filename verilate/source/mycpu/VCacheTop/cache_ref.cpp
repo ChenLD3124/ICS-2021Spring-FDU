@@ -59,7 +59,7 @@ auto CacheRefModel::load(addr_t addr, AXISize size) -> word_t {
             
         }
         for(int i=0;i<4;i++){
-            int tmp=(ca[csn][hit_num].index)+(csn<<4)+(i<<2);
+            // int tmp=(ca[csn][hit_num].index)+(csn<<4)+(i<<2);
             buffer[csn][hit_num][i]=mem.load(start+4*i);
         }
         ca[csn][hit_num].dirty=0;
@@ -109,7 +109,7 @@ void CacheRefModel::store(addr_t addr, AXISize size, word_t strobe, word_t data)
             
         }
         for(int i=0;i<4;i++){
-            int tmp=(ca[csn][hit_num].index)+(csn<<4)+(i<<2);
+            // int tmp=(ca[csn][hit_num].index)+(csn<<4)+(i<<2);
             buffer[csn][hit_num][i]=mem.load(start+4*i);
         }
         ca[csn][hit_num].dirty=0;
@@ -139,7 +139,7 @@ void CacheRefModel::check_internal() {
     /**
      * the following comes from StupidBuffer's reference model.
      */
-    /*for(int i=0;i<4;i++){
+    for(int i=0;i<4;i++){
         for(int j=0;j<4;j++){
             asserts(
                 ca[i][j].now == scope->can[16*i+4*j+2],
@@ -148,7 +148,7 @@ void CacheRefModel::check_internal() {
                 ca[i][j].now, scope->can[16*i+4*j+2],i,j,ca[i][j].index,scope->can[16*i+4*j+3]
             );
         }
-    }*/
+    }
     for (int i = 0; i < 4; i++) {
         for(int j=0;j<4;j++){
             for(int k=0;k<4;k++){

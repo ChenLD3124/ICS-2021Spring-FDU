@@ -13,8 +13,8 @@ module VTop (
 
     ibus_req_t  ireq;
     ibus_resp_t iresp,ir1,ir2;
-    dbus_req_t  dreq,dr1,dr2;
-    dbus_resp_t dresp;
+    dbus_req_t  dreq;
+    dbus_resp_t dresp,dr1,dr2;
     cbus_req_t  icreq,  dcreq,icreq2,  dcreq2,ic2,dc2;
     cbus_resp_t icresp, dcresp,icresp2, dcresp2;
 
