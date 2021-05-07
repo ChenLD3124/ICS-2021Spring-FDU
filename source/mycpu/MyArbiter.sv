@@ -14,7 +14,8 @@ module MyArbiter #(
     /**
      * TODO (Lab2) your code here :)
      */
-    logic lock,sel,sel_l,lock_nxt;
+    logic lock,lock_nxt;
+    i2 sel,sel_l;
     cbus_req_t sel_req,sel_req_l;
     assign oreq = sel_req;
     always_comb begin
@@ -24,14 +25,13 @@ module MyArbiter #(
             sel=sel_l;
             iresps[sel]=oresp;
         end else begin
-            if(ireqs[0].valid==1'b1)begin
-                sel_req=ireqs[0];
-                sel='0;
-            end else if (ireqs[1].valid==1'b1) begin
-                sel_req=ireqs[1];
-                sel='1;
-            end else begin
-                sel_req='0;sel='1;
+            sel_req='0;sel='1;
+            for(int i=0;i<NUM_INPUTS;++i)begin
+                if(ireqs[i[1:0]].valid==1'b1)begin
+                    sel_req=ireqs[i[1:0]];
+                    sel=i[1:0];
+                    break;
+                end
             end
         end
     end

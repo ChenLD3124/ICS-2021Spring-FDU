@@ -12,26 +12,33 @@ module VTop (
     `include "bus_decl"
 
     ibus_req_t  ireq;
-    ibus_resp_t iresp;
-    dbus_req_t  dreq;
+    ibus_resp_t iresp,ir1,ir2;
+    dbus_req_t  dreq,dr1,dr2;
     dbus_resp_t dresp;
-    cbus_req_t  icreq,  dcreq;
-    cbus_resp_t icresp, dcresp;
+    cbus_req_t  icreq,  dcreq,icreq2,  dcreq2,ic2,dc2;
+    cbus_resp_t icresp, dcresp,icresp2, dcresp2;
 
     cbus_req_t vreq;
     i32 paddr;
-
+    logic nocache_i,nocache_d;
+    assign nocache_i = (ireq.addr[31:28]==4'b1010)||(ireq.addr[31:28]==4'b1011);
+    assign nocache_d = (dreq.addr[31:28]==4'b1010)||(dreq.addr[31:28]==4'b1011);
+    assign ic2 = nocache_i?icreq2:'0;
+    assign dc2 = nocache_d?dcreq2:'0;
     MyCore core(.*);
-    IBusToCBus icvt(.*);
-    DBusToCBus dcvt(.*);
-
+    ICache icvt(.iresp(ir1),.*);
+    DCache dcvt(.dresp(dr1),.*);
+    IBusToCBus icvt2(.icreq(icreq2),.icresp(icresp2),.iresp(ir2),.*);
+    DBusToCBus dcvt2(.dcreq(dcreq2),.dcresp(dcresp2),.dresp(dr2),.*);
+    assign iresp = nocache_i?ir2:ir1;
+    assign dresp = nocache_d?dr2:dr1;
     /**
      * TODO (Lab2) replace mux with your own arbiter :)
      */
     // CBusArbiter
-    MyArbiter mux(
-        .ireqs({icreq, dcreq}),
-        .iresps({icresp, dcresp}),
+    MyArbiter #(.NUM_INPUTS(4)) mux(
+        .ireqs({icreq,ic2, dcreq,dc2}),
+        .iresps({icresp,icresp2, dcresp,dcresp2}),
         .oreq(vreq),
         .*
     );

@@ -30,7 +30,8 @@ module DCache (
     logic [3:0][1:0] cp,cp_nxt;
     i2 csn,F_offset;
     word_t [3:0][3:0] ram_rdata;
-    
+    logic nocache;
+    assign nocache=(dreq.addr[31:28]==4'b1010)||(dreq.addr[31:28]==4'b1011);
     typedef struct packed {
         logic valid,dirty,now;
         logic [25:0] index;
@@ -67,7 +68,7 @@ module DCache (
         ca_nxt=ca;cp_nxt=cp;
         unique case (state)
             IDLE:begin
-                if (dreq.valid) begin
+                if (dreq.valid&&nocache==1'b0) begin
                     for (int i=0; i<4; ++i) begin
                         if(ca[dreq.addr[5:4]][i].valid&&ca[dreq.addr[5:4]][i].index==dreq.addr[31:6])begin
                             hit='1;hit_num=i[1:0];
@@ -118,7 +119,7 @@ module DCache (
             cp<=cp_nxt;
             unique case (state)
                 IDLE:begin
-                    if (dreq.valid) begin
+                    if (dreq.valid&&nocache==1'b0) begin
                         if(hit) state<=READY;
                         else if(dirt) state<=FLUSH;
                         else state<=FETCH;
