@@ -18,6 +18,8 @@ module execute(
         {M_pre.hi_w,M_pre.lo_w}={E.hi_w,E.lo_w};
         M_pre.regw=E.regw;
         M_pre.pc=E.pc;
+        M_pre.exp=E.exp;
+        M_pre.t=E.t;
         unique case (E.OP)
             OP_RTYPE:begin
                 unique case (E.FN)
@@ -25,6 +27,22 @@ module execute(
                     FN_SRL: M_pre.valA=E.valB>>E.sa;
                     FN_SRA: M_pre.valA=signed'(E.valB)>>>E.sa;
                     FN_ADDU,FN_JALR: M_pre.valA=E.valA+E.valB;
+                    FN_ADD:begin
+                        tmp={'0,E.valA[31],E.valA}+{'0,E.valB[31],E.valB};
+                        if (tmp[32]!=tmp[31]) begin
+                            M_pre.exp.OV='1;
+                        end else begin
+                            M_pre.valA=tmp[31:0];
+                        end
+                    end
+                    FN_SUB:begin
+                        tmp={'0,E.valA[31],E.valA}-{'0,E.valB[31],E.valB};
+                        if (tmp[32]!=tmp[31]) begin
+                            M_pre.exp.OV='1;
+                        end else begin
+                            M_pre.valA=tmp[31:0];
+                        end
+                    end
                     FN_SUBU: M_pre.valA=E.valA-E.valB;
                     FN_AND: M_pre.valA=E.valA&E.valB;
                     FN_OR:  M_pre.valA=E.valA|E.valB;
@@ -90,6 +108,14 @@ module execute(
                     default:begin M_pre.valA=E.valA;M_pre.valB=E.valB;end
                 endcase
             end
+            OP_ADDI:begin
+                tmp={'0,E.valA[31],E.valA}+{'0,E.valB[31],E.valB};
+                if (tmp[32]!=tmp[31]) begin
+                    M_pre.exp.OV='1;
+                end else begin
+                    M_pre.valA=tmp[31:0];
+                end
+            end
             OP_ANDI: M_pre.valA=E.valA&E.valB;
             OP_ORI: M_pre.valA=E.valA|E.valB;
             OP_XORI: M_pre.valA=E.valA^E.valB;
@@ -111,6 +137,9 @@ module execute(
             end
             OP_BTYPE:begin
                 M_pre.valA=E.valA+E.valB;
+            end
+            OP_COP0:begin
+                M_pre.valA=E.valA;
             end
             default:;
         endcase

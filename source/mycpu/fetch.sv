@@ -7,17 +7,22 @@ module fetch(
     output i32 pc_fetch,
     output logic pcf2,
     input logic clk,
-    input logic resetn
-);
-    logic valid,valid_nxt;
-    assign D_pre.pc = F.pc;
-    assign D_pre.imp=iresp.data;
-    assign pc_fetch = F.pc+32'b100;
+    input logic resetn,
 
+);
+    logic valid,valid_nxt,int_err;
+    assign D_pre.pc = F.pc;
+    assign D_pre.imp=int_err?'0:iresp.data;
+    assign pc_fetch = F.pc+32'b100;
+    assign int_err = F.pc[0]|F.pc[1];
+    always_comb begin
+      D_pre.exp='0;
+      D_pre.exp.ADEL=int_err;
+    end
     //
-    assign ireq.valid=valid;
+    assign ireq.valid=int_err?'0:valid;
     assign ireq.addr = F.pc;
-    assign pcf2 =~iresp.data_ok;
+    assign pcf2 =int_err?'0:(~iresp.data_ok);
     always_ff @(posedge clk) begin
     if(resetn) begin
       if (iresp.data_ok==1'b1) begin

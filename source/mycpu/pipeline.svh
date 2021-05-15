@@ -2,28 +2,49 @@
 `define __PIPELINE_SVH__
 `include "common.svh"
 typedef struct packed {
+    logic INT,ADEL,ADES,SYS,BP,RI,OV,wen,EXL,eret;
+    logic [4:0] regw;
+} EXP_sig;
+
+typedef enum i5 { 
+    INT=5'b00000,
+    ADEL=5'b00100,
+    ADES=5'b00101,
+    SYS=5'b01000,
+    BP=5'b01001,
+    RI=5'b01010,
+    OV=5'b01100
+} ExcCode_t;
+
+typedef struct packed {
+    i32 badvaddr,count,compare,EPC,status,cause;
+} CP0_t;
+typedef struct packed {
     i32 pc;
 } F_type;
 typedef struct packed {
     i32 pc,imp;
+    EXP_sig exp;
 } D_type;
 typedef struct packed {
     i6 OP,FN;
     i5 regw,sa;
     i32 valA,valB,valC,pc;
-    logic hi_w,lo_w;
+    logic hi_w,lo_w,t;
+    EXP_sig exp;
 } E_type;
 typedef struct packed {
     i6 OP;
     i32 valA,valB,pc;
-    logic rm,wm,hi_w,lo_w;
+    logic rm,wm,hi_w,lo_w,t;
     i5 regw;
+    EXP_sig exp;
 } M_type;
 typedef struct packed {
     i32 valA,valB,pc;
     i5 regw;
     // logic rm;
-    logic wen,hi_w,lo_w;
+    logic wen,hi_w,lo_w,t;
 } W_type;
 // typedef logic[31:0] word_t;
 typedef logic[4:0] creg_addr_t;

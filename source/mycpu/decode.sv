@@ -13,9 +13,13 @@ module decode(
     output logic pcf1,
     input i32 hi_new,lo_new,
     input logic e_hi,e_lo,m_hi,m_lo,
-    input i32 regval_elo,regval_mlo
+    input i32 regval_elo,regval_mlo,
+    input CP0_t CP0_nxt,
+    input i1 E_cpw,
+    input i5 E_cpr,
+    input logic cp0_int
 );
-    i32 pc_nxt,hd1,hd2,hd3,hd4;
+    i32 pc_nxt,hd1,hd2,hd3,hd4,cpa;
     assign hd3 = e_hi?regval_execute:(m_hi?regval_memory:hi_new);
     assign hd4 = e_lo?regval_elo:(m_lo?regval_mlo:lo_new);
     always_comb begin
@@ -46,12 +50,34 @@ module decode(
         end
     end
     always_comb begin
+        cpa='0;
+        if (D.imp[31:26]==OP_COP0&&D.imp[25:21]==5'b00000) begin
+            unique case (D.imp[15:11])
+                5'b01000: cpa=CP0_nxt.badvaddr;
+                5'b01001: cpa=CP0_nxt.count;
+                5'b01011: cpa=CP0_nxt.compare;
+                5'b01100: cpa=CP0_nxt.status;
+                5'b01101: cpa=CP0_nxt.cause;
+                5'b01110: cpa=CP0_nxt.EPC;
+            endcase
+            if (E_cpw&&D.imp[15:11]==E_cpr) begin
+                cpa=regval_execute;
+            end
+            
+        end
+    end
+    always_comb begin
         ra1='0;ra2='0;
         unique case (D.imp[31:26])
             OP_RTYPE,OP_BEQ,OP_BNE,OP_SW,OP_SH,OP_SB:begin ra1=D.imp[25:21];ra2=D.imp[20:16]; end
             OP_ADDIU,OP_SLTI,OP_SLTIU,OP_ANDI,OP_ORI,OP_XORI,OP_LUI,OP_LW,
                 OP_BGTZ,OP_BLEZ,OP_BTYPE,OP_LB,OP_LBU,OP_LH,OP_LHU:begin
                 ra1=D.imp[25:21];
+            end
+            OP_COP0:begin
+                if (D.imp[25:21]==5'b00100) begin
+                    ra1=D.imp[20:16];
+                end
             end
             default:;
         endcase
@@ -64,6 +90,9 @@ module decode(
         E_pre.pc=D.pc;
         pc_decode='0;
         ifj='0;
+        E_pre.exp=D.exp;
+        E_pre.exp.EXL=CP0_nxt.status[1];
+        E_pre.exp.INT=cp0_int;
         //decode
         unique case (E_pre.OP)
             OP_RTYPE:begin
@@ -86,21 +115,54 @@ module decode(
                     FN_JR:begin
                         pc_decode=hd1;
                         ifj=1'b1;
+                        E_pre.t='1;
                     end
                     FN_JALR:begin
                         pc_decode=hd1;
                         E_pre.valA=D.pc;
                         E_pre.valB=32'b1000;
                         ifj='1;
+                        E_pre.t='1;
+                    end
+                    FN_BREAK:begin
+                        E_pre.exp.BP='1;
+                    end
+                    FN_SYSCALL:begin
+                        E_pre.exp.SYS='1;
                     end
                     default:begin
-                        E_pre.valA=hd1;
-                        E_pre.valB=hd2;
-                        E_pre.sa=D.imp[10:6];
+                        if(D.imp[5:0]==FN_SLL||
+                        D.imp[5:0]==FN_SRL||
+                        D.imp[5:0]==FN_SRA||
+                        D.imp[5:0]==FN_SRLV||
+                        D.imp[5:0]==FN_SRAV||
+                        D.imp[5:0]==FN_SLLV||
+                        D.imp[5:0]==FN_SYSCALL||
+                        D.imp[5:0]==FN_BREAK||
+                        D.imp[5:0]==FN_MULT||
+                        D.imp[5:0]==FN_MULTU||
+                        D.imp[5:0]==FN_DIV||
+                        D.imp[5:0]==FN_DIVU||
+                        D.imp[5:0]==FN_ADD||
+                        D.imp[5:0]==FN_ADDU||
+                        D.imp[5:0]==FN_SUB||
+                        D.imp[5:0]==FN_SUBU||
+                        D.imp[5:0]==FN_AND||
+                        D.imp[5:0]==FN_OR||
+                        D.imp[5:0]==FN_XOR||
+                        D.imp[5:0]==FN_NOR||
+                        D.imp[5:0]==FN_SLT||
+                        D.imp[5:0]==FN_SLTU)begin
+                            E_pre.valA=hd1;
+                            E_pre.valB=hd2;
+                            E_pre.sa=D.imp[10:6];
+                        end else begin
+                            E_pre.exp.IR='1;
+                        end
                     end
                 endcase
             end
-            OP_ADDIU,OP_SLTI,OP_SLTIU,OP_ANDI,OP_ORI,OP_XORI,OP_LUI,OP_LW,OP_LB,OP_LH,OP_LBU,OP_LHU:begin
+            OP_ADDIU,OP_ADDI,OP_SLTI,OP_SLTIU,OP_ANDI,OP_ORI,OP_XORI,OP_LUI,OP_LW,OP_LB,OP_LH,OP_LBU,OP_LHU:begin
                 E_pre.regw=D.imp[20:16];
                 E_pre.valA=hd1;
                 if(E_pre.OP!=OP_ANDI&&E_pre.OP!=OP_ORI&&E_pre.OP!=OP_XORI&&E_pre.OP!=OP_LUI)begin
@@ -115,6 +177,7 @@ module decode(
             end
             OP_J,OP_JAL:begin
                 ifj=1'b1;
+                E_pre.t='1;
                 pc_nxt=D.pc+32'h4;//!!!
                 pc_decode={pc_nxt[31:28],D.imp[25:0],2'b00};
                 if(E_pre.OP==OP_JAL)begin
@@ -128,6 +191,7 @@ module decode(
                 pc_nxt={{14{D.imp[15]}},D.imp[15:0],2'b00};
                 pc_decode=D.pc+pc_nxt+32'h4;//!!!
                 E_pre.valA=hd1;E_pre.valB=hd2;
+                E_pre.t='1;
                 if (E_pre.valA==E_pre.valB&&E_pre.OP==OP_BEQ) begin
                     ifj=1'b1;
                 end else if (E_pre.valA!=E_pre.valB&&E_pre.OP==OP_BNE) begin
@@ -139,6 +203,7 @@ module decode(
                 pc_nxt={{14{D.imp[15]}},D.imp[15:0],2'b00};
                 pc_decode=D.pc+pc_nxt+32'h4;//!!!
                 E_pre.valA=hd1;
+                E_pre.t='1;
                 if(E_pre.OP==OP_BGTZ&&signed'(E_pre.valA)>0)begin
                     ifj=1'b1;
                 end else if (E_pre.OP==OP_BLEZ&&signed'(E_pre.valA)<=0) begin
@@ -150,6 +215,7 @@ module decode(
                 pc_nxt={{14{D.imp[15]}},D.imp[15:0],2'b00};
                 pc_decode=D.pc+pc_nxt+32'h4;//!!!
                 E_pre.valC=hd1;
+                E_pre.t='1;
                 unique case (D.imp[20:16])
                     BGEZ:begin if(signed'(E_pre.valC)>=0)begin ifj='1;end end
                     BLTZ:begin if(signed'(E_pre.valC)<0)begin ifj='1;end end
@@ -160,10 +226,36 @@ module decode(
                         E_pre.valA=D.pc;
                         E_pre.valB=32'b1000;
                     end
-                    default:;
+                    default:begin
+                        E_pre.exp.IR='1;
+                    end
                 endcase
             end
-            default:;
+            OP_COP0:begin
+                unique case (D.imp[25:21])
+                    5'b00000:begin//MF
+                        E_pre.regw=D.imp[20:16];
+                        E_pre.valA=cpa;
+                    end
+                    5'b00100:begin//MT
+                        E_pre.valA=hd1;
+                        E_pre.exp.regw=D.imp[15:11];
+                        E_pre.exp.wen='1;
+                    end
+                    default:begin
+                        if (D.imp[25]) begin
+                            E_pre.valA=CP0_nxt.EPC;
+                            E_pre.exp.eret='1;
+                        end
+                        else begin
+                            E_pre.exp.IR='1;
+                        end
+                    end
+                endcase
+            end
+            default:begin
+                E_pre.exp.IR='1;
+            end
         endcase
     end
 endmodule

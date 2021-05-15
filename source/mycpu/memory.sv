@@ -5,11 +5,14 @@ module memory(
     output W_type W_pre,
     input dbus_resp_t dresp,
     output dbus_req_t dreq,
-    output logic pcf3
+    output logic pcf3,
+    output logic exp,cp0_wen,cp0_badwen,
+    output i5 cp0_regw,excode,
+    output i32 cp0_wdata,cp0_badvaddr
 );
-    logic valid,valid_nxt;
+    logic valid,valid_nxt,M_ADEL,M_ADES;
     int tmp;
-    assign pcf3 = (M.rm|M.wm)?~dresp.data_ok:'0;
+    assign pcf3 = exp?'0:((M.rm|M.wm)?~dresp.data_ok:'0);
     always_ff @(posedge clk) begin
         if (pcf3==1'b0) begin
           valid<='1;
@@ -23,68 +26,125 @@ module memory(
       end
     assign valid_nxt = valid;
     always_comb begin
+      M_ADEL='0;M_ADES='0;
+      if (M.OP==OP_LW&&M.rm&&(M.valA[0]|M.valA[1])) begin
+        M_ADEL='1;
+      end
+      else if ((M.OP==OP_LH||M.OP==OP_LHU)&&M.rm&&M.valA[0]) begin
+        M_ADEL='1;
+      end
+      else if (M.OP==OP_SW&&M.wm&&(M.valA[0]|M.valA[1])) begin
+        M_ADES='1;
+      end
+      else if (M.OP==OP_SH&&M.wm&&M.valA[0]) begin
+        M_ADES='1;
+      end
+    end
+    always_comb begin
+      exp='0;excode='0;
+      cp0_badwen='0;cp0_badvaddr='0;
+      if (M.exp.INT) begin
+        exp='1;excode=INT;
+      end
+      else if (M.exp.ADEL) begin
+        exp='1;excode=ADEL;cp0_badwen='1;
+        cp0_badvaddr=M.pc;
+      end
+      else if (M.exp.SYS) begin
+        exp='1;excode=SYS;
+      end
+      else if (M.exp.BP) begin
+        exp='1;excode=BP;
+      end
+      else if (M.exp.RI) begin
+        exp='1;excode=RI;
+      end
+      else if (M.exp.OV) begin
+        exp='1;excode=OV;
+      end
+      else if (M_ADEL) begin
+        exp='1;excode=ADEL;cp0_badwen='1;
+        cp0_badvaddr=M.valA;
+      end
+      else if (M_ADES) begin
+        exp='1;excode=ADES;cp0_badwen='1;
+        cp0_badvaddr=M.valA;
+      end
+    end
+    always_comb begin
+      cp0_wen='0;cp0_regw='0;
+      if (exp=='0&&M.exp.wen) begin
+        cp0_regw=M.exp.regw;
+        cp0_wen='1;
+        cp0_wdata=M.valA;
+      end
+    end
+    always_comb begin
         dreq='0;
-        dreq.valid = (M.rm|M.wm)?valid:'0;
         W_pre='0;tmp='0;
         W_pre.pc=M.pc;
+        W_pre.t=M.t;
         {W_pre.hi_w,W_pre.lo_w}={M.hi_w,M.lo_w};
-        if(M.rm) begin
-            dreq.addr=M.valA;
-            W_pre.regw=M.regw;
-            // W_pre.rm='1;
-            W_pre.wen='1;
-            unique case (M.OP)
-              OP_LW:begin
-                dreq.size=MSIZE4;
-                W_pre.valA=dresp.data;
-              end
-              OP_LH,OP_LHU:begin
-                dreq.size=MSIZE2;
-                tmp=int'(M.valA[1:1])<<4;
-                W_pre.valA=(dresp.data>>tmp)&32'hffff;
-                if(M.OP==OP_LH)begin
-                  W_pre.valA=signed'(W_pre.valA<<16)>>>16;
+        if(exp==1'b0) begin
+          dreq.valid = (M.rm|M.wm)?valid:'0;
+          if(M.rm) begin
+              dreq.addr=M.valA;
+              W_pre.regw=M.regw;
+              // W_pre.rm='1;
+              W_pre.wen='1;
+              unique case (M.OP)
+                OP_LW:begin
+                  dreq.size=MSIZE4;
+                  W_pre.valA=dresp.data;
                 end
-              end
-              OP_LB,OP_LBU:begin
-                dreq.size=MSIZE1;
-                tmp=int'(M.valA[1:0])<<3;
-                W_pre.valA=(dresp.data>>tmp)&32'hff;
-                if(M.OP==OP_LB)begin
-                  W_pre.valA=signed'(W_pre.valA<<24)>>>24;
+                OP_LH,OP_LHU:begin
+                  dreq.size=MSIZE2;
+                  tmp=int'(M.valA[1:1])<<4;
+                  W_pre.valA=(dresp.data>>tmp)&32'hffff;
+                  if(M.OP==OP_LH)begin
+                    W_pre.valA=signed'(W_pre.valA<<16)>>>16;
+                  end
                 end
+                OP_LB,OP_LBU:begin
+                  dreq.size=MSIZE1;
+                  tmp=int'(M.valA[1:0])<<3;
+                  W_pre.valA=(dresp.data>>tmp)&32'hff;
+                  if(M.OP==OP_LB)begin
+                    W_pre.valA=signed'(W_pre.valA<<24)>>>24;
+                  end
+                end
+                default:;
+              endcase
+
+          end else if(M.wm)begin
+              dreq.addr=M.valA;
+              unique case (M.OP)
+                OP_SB:begin
+                  dreq.size=MSIZE1;
+                  dreq.strobe=4'h1<<M.valA[1:0];
+                  dreq.data=M.valB<<(int'(M.valA[1:0])<<3);
+                end
+                OP_SW:begin
+                  dreq.size=MSIZE4;
+                  dreq.strobe=4'hf;
+                  dreq.data=M.valB;
+                end
+                OP_SH:begin
+                  dreq.size=MSIZE2;
+                  dreq.strobe=4'h3<<M.valA[1:0];
+                  dreq.data=M.valB<<(int'(M.valA[1:0])<<3);
+                end
+                default:;
+              endcase
+
+          end else begin
+              W_pre.regw=M.regw;
+              W_pre.valA=M.valA;
+              W_pre.valB=M.valB;
+              if (W_pre.regw!=5'b0) begin
+                  W_pre.wen='1;
               end
-              default:;
-            endcase
-            
-        end else if(M.wm)begin
-            dreq.addr=M.valA;
-            unique case (M.OP)
-              OP_SB:begin
-                dreq.size=MSIZE1;
-                dreq.strobe=4'h1<<M.valA[1:0];
-                dreq.data=M.valB<<(int'(M.valA[1:0])<<3);
-              end
-              OP_SW:begin
-                dreq.size=MSIZE4;
-                dreq.strobe=4'hf;
-                dreq.data=M.valB;
-              end
-              OP_SH:begin
-                dreq.size=MSIZE2;
-                dreq.strobe=4'h3<<M.valA[1:0];
-                dreq.data=M.valB<<(int'(M.valA[1:0])<<3);
-              end
-              default:;
-            endcase
-            
-        end else begin
-            W_pre.regw=M.regw;
-            W_pre.valA=M.valA;
-            W_pre.valB=M.valB;
-            if (W_pre.regw!=5'b0) begin
-                W_pre.wen='1;
-            end
+          end
         end
     end
 endmodule

@@ -6,7 +6,9 @@ module MyCore (
     output ibus_req_t  ireq,
     input  ibus_resp_t iresp,
     output dbus_req_t  dreq,
-    input  dbus_resp_t dresp
+    input  dbus_resp_t dresp，
+
+    input i6 ext_int
 );
     /**
      * TODO (Lab1) your code here :)
@@ -37,7 +39,19 @@ module MyCore (
     i32 regval_execute,regval_memory,regval_elo,regval_mlo;
     logic rdmem,rdmem_m;
     i32 dresp_data;
-    logic e_hi,e_lo,m_hi,m_lo;
+    logic e_hi,e_lo,m_hi,m_lo,E_cpw,cp0_int,time_int;
+    i5 E_cpr;
+    i8 int_info;
+    logic exp,cp0_tmp,cp0_wen,cp0_badwen,time_clear;
+    i5 cp0_regw,excode;
+    i32 cp0_wdata,cp0_badvaddr;
+    //
+    CP0_t CP0,CP0_nxt,M_cp0;
+    //
+    assign cp0_int = CP0_nxt.status[0]&(~CP0_nxt.status[1])&(int_info=='0);
+    assign int_info = ({ext_int, 2'b00} | CP0_nxt.cause[15:10] | {time_int, 7'b0})&CP0_nxt.status[15:8];
+    assign E_cpw = M_pre.exp.wen;
+    assign E_cpr = M_pre.exp.regw;
     assign regval_execute = M_pre.valA;
     assign regw_execute = E.regw;
     assign regval_memory = W_pre.valA;
@@ -47,7 +61,6 @@ module MyCore (
     assign {e_hi,e_lo,m_hi,m_lo} = {M_pre.hi_w,M_pre.lo_w,M.hi_w,M.lo_w};
     assign regval_elo = M_pre.valB;
     assign regval_mlo = W_pre.valB;
-    // assign dresp_data = W_pre.valA;
     //module
     fetch fetch_c(.*);
     decode decode_c(.*);
@@ -57,10 +70,43 @@ module MyCore (
     regfile reg_c(.*);
     hilo hilo_c(.*);
     //
-    // assign F_pre.pc = F_st?F.pc:(ifj?pc_decode:pc_fetch);
-    assign F_pre.pc = ifj?pc_decode:pc_fetch;
-    // assign ireq.addr = F_pre.pc; lab1
-    // assign ireq.valid = ~(F_pre.pc[0:0]|F_pre.pc[1:1]);
+    assign F_pre.pc = exp?0'hbfc00380:(M.exp.eret?M.valA:(ifj?pc_decode:pc_fetch));
+    //
+    always_comb begin
+        CP0_nxt=CP0;
+        CP0_nxt.count=CP0.count+cp0_tmp;
+        time_clear='0;
+        if(cp0_wen)begin
+            priority case (cp0_regw)
+                5'b01000: CP0_nxt.badvaddr=cp0_wdata;
+                5'b01001: CP0_nxt.count=cp0_wdata;
+                5'b01011: begin CP0_nxt.compare=cp0_wdata;time_clear='1;end
+                5'b01000: CP0_nxt.status=cp0_wdata;
+                5'b01000: CP0_nxt.cause=cp0_wdata;
+                5'b01000: CP0_nxt.EPC=cp0_wdata;
+            endcase
+        end
+        else if (exp) begin
+            if (cp0_badwen) begin
+                CP0_nxt.badvaddr=cp0_badvaddr;
+            end
+            CP0_nxt.cause[6:2]=excode;
+            if (M.exp.ESL==1'b0) begin
+                if (W.t) begin
+                    CP0_nxt.EPC=W.pc;
+                    CP0_nxt.cause[31]='1;
+                end
+                else begin
+                    CP0_nxt.EPC=M.pc;
+                    CP0_nxt.cause[31]='0;
+                end
+            end
+            CP0_nxt.status[1]='1;
+        end
+        else if (M.exp.eret) begin
+            CP0_nxt.status[1]='0;
+        end
+    end
     //control
     always_comb begin
         F_st='0;D_st='0;D_bb='0;E_bb='0;EM_st='0;M_bb='0;W_bb='0;
@@ -78,28 +124,36 @@ module MyCore (
                 F<=F_pre;
             end
             if(D_st!=1'b1) begin
-                if ( D_bb==1'b1 ) begin
+                if ( D_bb==1'b1||exp||M.exp.eret ) begin
                     D<='0;
                 end else begin
                     D<=D_pre;
                 end
             end
             if(EM_st!= 1'b1) begin
-                if (E_bb==1'b1) begin
+                if (E_bb==1'b1||exp||M.exp.eret) begin
                     E<='0;
                 end else begin
                     E<=E_pre;
                 end
-                if (M_bb==1'b1) begin
+                if (M_bb==1'b1||exp||M.exp.eret) begin
                     M<='0;
                 end else begin
                     M<=M_pre;
                 end
             end
-            if (W_bb==1'b1) begin
+            if (W_bb==1'b1||exp||M.exp.eret) begin
                 W<='0;
             end else begin
                 W<=W_pre;
+            end
+            //
+            CP0<=CP0_nxt;
+            cp0_tmp<=(~cp0_tmp);
+            if (time_clear=='0&&CP0_nxt.count==CP0_nxt.compare) begin
+                time_int<='1;
+            end else if (time_clear) begin
+                time_int<='0;
             end
         end else begin
         // reset
@@ -109,6 +163,9 @@ module MyCore (
         E<='0;
         M<='0;
         W<='0;
+        CP0<='0;
+        cp0_tmp<='0;
+        time_int<='0;
         end
     end
     
