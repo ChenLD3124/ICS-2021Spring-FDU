@@ -28,7 +28,7 @@ module execute(
                     FN_SRA: M_pre.valA=signed'(E.valB)>>>E.sa;
                     FN_ADDU,FN_JALR: M_pre.valA=E.valA+E.valB;
                     FN_ADD:begin
-                        tmp={'0,E.valA[31],E.valA}+{'0,E.valB[31],E.valB};
+                        tmp={31'b0,E.valA[31],E.valA}+{31'b0,E.valB[31],E.valB};
                         if (tmp[32]!=tmp[31]) begin
                             M_pre.exp.OV='1;
                         end else begin
@@ -36,7 +36,7 @@ module execute(
                         end
                     end
                     FN_SUB:begin
-                        tmp={'0,E.valA[31],E.valA}-{'0,E.valB[31],E.valB};
+                        tmp={31'b0,E.valA[31],E.valA}-{31'b0,E.valB[31],E.valB};
                         if (tmp[32]!=tmp[31]) begin
                             M_pre.exp.OV='1;
                         end else begin
@@ -109,7 +109,7 @@ module execute(
                 endcase
             end
             OP_ADDI:begin
-                tmp={'0,E.valA[31],E.valA}+{'0,E.valB[31],E.valB};
+                tmp={31'b0,E.valA[31],E.valA}+{31'b0,E.valB[31],E.valB};
                 if (tmp[32]!=tmp[31]) begin
                     M_pre.exp.OV='1;
                 end else begin

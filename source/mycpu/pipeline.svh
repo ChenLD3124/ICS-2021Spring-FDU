@@ -2,7 +2,7 @@
 `define __PIPELINE_SVH__
 `include "common.svh"
 typedef struct packed {
-    logic INT,ADEL,ADES,SYS,BP,RI,OV,wen,EXL,eret;
+    logic INT,ADEL,ADES,SYS,BP,RI,OV,wen,EXL,eret,t;
     logic [4:0] regw;
 } EXP_sig;
 

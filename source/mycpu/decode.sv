@@ -17,7 +17,7 @@ module decode(
     input CP0_t CP0_nxt,
     input i1 E_cpw,
     input i5 E_cpr,
-    input logic cp0_int
+    input logic cp0_int,cp0_t
 );
     i32 pc_nxt,hd1,hd2,hd3,hd4,cpa;
     assign hd3 = e_hi?regval_execute:(m_hi?regval_memory:hi_new);
@@ -59,6 +59,7 @@ module decode(
                 5'b01100: cpa=CP0_nxt.status;
                 5'b01101: cpa=CP0_nxt.cause;
                 5'b01110: cpa=CP0_nxt.EPC;
+                default: cpa='0;
             endcase
             if (E_cpw&&D.imp[15:11]==E_cpr) begin
                 cpa=regval_execute;
@@ -70,7 +71,7 @@ module decode(
         ra1='0;ra2='0;
         unique case (D.imp[31:26])
             OP_RTYPE,OP_BEQ,OP_BNE,OP_SW,OP_SH,OP_SB:begin ra1=D.imp[25:21];ra2=D.imp[20:16]; end
-            OP_ADDIU,OP_SLTI,OP_SLTIU,OP_ANDI,OP_ORI,OP_XORI,OP_LUI,OP_LW,
+            OP_ADDIU,OP_SLTI,OP_SLTIU,OP_ANDI,OP_ORI,OP_XORI,OP_LUI,OP_LW,OP_ADDI,
                 OP_BGTZ,OP_BLEZ,OP_BTYPE,OP_LB,OP_LBU,OP_LH,OP_LHU:begin
                 ra1=D.imp[25:21];
             end
@@ -93,6 +94,7 @@ module decode(
         E_pre.exp=D.exp;
         E_pre.exp.EXL=CP0_nxt.status[1];
         E_pre.exp.INT=cp0_int;
+        E_pre.exp.t=cp0_t;
         //decode
         unique case (E_pre.OP)
             OP_RTYPE:begin
@@ -157,7 +159,7 @@ module decode(
                             E_pre.valB=hd2;
                             E_pre.sa=D.imp[10:6];
                         end else begin
-                            E_pre.exp.IR='1;
+                            E_pre.exp.RI='1;
                         end
                     end
                 endcase
@@ -227,7 +229,7 @@ module decode(
                         E_pre.valB=32'b1000;
                     end
                     default:begin
-                        E_pre.exp.IR='1;
+                        E_pre.exp.RI='1;
                     end
                 endcase
             end
@@ -248,13 +250,13 @@ module decode(
                             E_pre.exp.eret='1;
                         end
                         else begin
-                            E_pre.exp.IR='1;
+                            E_pre.exp.RI='1;
                         end
                     end
                 endcase
             end
             default:begin
-                E_pre.exp.IR='1;
+                E_pre.exp.RI='1;
             end
         endcase
     end

@@ -6,7 +6,7 @@ module MyCore (
     output ibus_req_t  ireq,
     input  ibus_resp_t iresp,
     output dbus_req_t  dreq,
-    input  dbus_resp_t dresp，
+    input  dbus_resp_t dresp,
 
     input i6 ext_int
 );
@@ -39,17 +39,17 @@ module MyCore (
     i32 regval_execute,regval_memory,regval_elo,regval_mlo;
     logic rdmem,rdmem_m;
     i32 dresp_data;
-    logic e_hi,e_lo,m_hi,m_lo,E_cpw,cp0_int,time_int;
+    logic e_hi,e_lo,m_hi,m_lo,E_cpw,cp0_int,time_int,cp0_t;
     i5 E_cpr;
     i8 int_info;
     logic exp,cp0_tmp,cp0_wen,cp0_badwen,time_clear;
     i5 cp0_regw,excode;
     i32 cp0_wdata,cp0_badvaddr;
     //
-    CP0_t CP0,CP0_nxt,M_cp0;
+    CP0_t CP0,CP0_nxt;
     //
     assign cp0_int = CP0_nxt.status[0]&(~CP0_nxt.status[1])&(int_info=='0);
-    assign int_info = ({ext_int, 2'b00} | CP0_nxt.cause[15:10] | {time_int, 7'b0})&CP0_nxt.status[15:8];
+    assign int_info = ({ext_int, 2'b00}|CP0_nxt.cause[15:8]|{time_int, 7'b0})&CP0_nxt.status[15:8];
     assign E_cpw = M_pre.exp.wen;
     assign E_cpr = M_pre.exp.regw;
     assign regval_execute = M_pre.valA;
@@ -61,6 +61,7 @@ module MyCore (
     assign {e_hi,e_lo,m_hi,m_lo} = {M_pre.hi_w,M_pre.lo_w,M.hi_w,M.lo_w};
     assign regval_elo = M_pre.valB;
     assign regval_mlo = W_pre.valB;
+    assign cp0_t = E.t;
     //module
     fetch fetch_c(.*);
     decode decode_c(.*);
@@ -74,16 +75,17 @@ module MyCore (
     //
     always_comb begin
         CP0_nxt=CP0;
-        CP0_nxt.count=CP0.count+cp0_tmp;
+        CP0_nxt.count=CP0.count+i32'(cp0_tmp);
         time_clear='0;
         if(cp0_wen)begin
             priority case (cp0_regw)
                 5'b01000: CP0_nxt.badvaddr=cp0_wdata;
                 5'b01001: CP0_nxt.count=cp0_wdata;
                 5'b01011: begin CP0_nxt.compare=cp0_wdata;time_clear='1;end
-                5'b01000: CP0_nxt.status=cp0_wdata;
-                5'b01000: CP0_nxt.cause=cp0_wdata;
-                5'b01000: CP0_nxt.EPC=cp0_wdata;
+                5'b01100: CP0_nxt.status=cp0_wdata;
+                5'b01101: CP0_nxt.cause=cp0_wdata;
+                5'b01110: CP0_nxt.EPC=cp0_wdata;
+                default:;
             endcase
         end
         else if (exp) begin
@@ -91,9 +93,9 @@ module MyCore (
                 CP0_nxt.badvaddr=cp0_badvaddr;
             end
             CP0_nxt.cause[6:2]=excode;
-            if (M.exp.ESL==1'b0) begin
-                if (W.t) begin
-                    CP0_nxt.EPC=W.pc;
+            if (M.exp.EXL==1'b0) begin
+                if (M.exp.t) begin
+                    CP0_nxt.EPC=M.pc-4;
                     CP0_nxt.cause[31]='1;
                 end
                 else begin
@@ -115,6 +117,9 @@ module MyCore (
         end
         if (pcf3==1'b1||pcf4==1'b1) begin
             F_st='1;D_st='1;EM_st='1;W_bb='1;
+        end
+        if (F_st&(exp|M.exp.eret)) begin
+            D_st='1;EM_st='1;W_bb='1;
         end
     end
     always_ff @(posedge clk) begin

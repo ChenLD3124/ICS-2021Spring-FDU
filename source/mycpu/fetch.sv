@@ -7,7 +7,7 @@ module fetch(
     output i32 pc_fetch,
     output logic pcf2,
     input logic clk,
-    input logic resetn,
+    input logic resetn
 
 );
     logic valid,valid_nxt,int_err;
