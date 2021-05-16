@@ -21,6 +21,7 @@ typedef struct packed {
 } CP0_t;
 typedef struct packed {
     i32 pc;
+    logic cp0_int;
 } F_type;
 typedef struct packed {
     i32 pc,imp;

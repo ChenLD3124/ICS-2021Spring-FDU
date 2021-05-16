@@ -47,7 +47,7 @@ module DCache (
     assign dcreq.valid    = state == FETCH || state == FLUSH;
     assign dcreq.is_write = state == FLUSH;
     assign dcreq.size     = MSIZE4;
-    assign dcreq.addr     = (state == FLUSH)?{ca[csn][hit_num_r].index,csn,F_offset,2'b0}:req.addr;
+    assign dcreq.addr     = (state == FLUSH)?{ca[csn][hit_num_r].index,csn,2'b0,2'b0}:{req.addr[31:4],4'b0};
     assign dcreq.strobe   = 4'b1111;
     assign dcreq.data     = ram_rdata[csn][hit_num_r];
     assign dcreq.len      = MLEN4;
@@ -57,7 +57,7 @@ module DCache (
     for (genvar i = 0; i < 16; i++) begin:cl
         LUTRAM #(.NUM_BYTES(16)) ram_line(
             .clk(clk), .en(ram_en[i[3:2]][i[1:0]]),
-            .addr(offset),
+            .addr((state==FLUSH||state==FETCH)?F_offset:offset),
             .strobe(ram.strobe),
             .wdata(ram.wdata),
             .rdata(ram_rdata[i[3:2]][i[1:0]])
@@ -127,7 +127,7 @@ module DCache (
                         req<=dreq;
                         offset<=start;
                         hit_num_r<=hit_num;
-                        F_offset<=start;
+                        F_offset<='0;
                     end
                     
                 end
@@ -137,13 +137,13 @@ module DCache (
                 FETCH:begin
                     if (dcresp.ready) begin
                         state  <= dcresp.last ? READY : FETCH;
-                        offset <= offset + 1;
+                        F_offset <= F_offset + 1;
                     end
                 end
                 FLUSH:begin
                     if (dcresp.ready) begin
                         state  <= dcresp.last ? FETCH : FLUSH;
-                        offset <= offset + 1;
+                        F_offset <= F_offset + 1;
                     end
                 end
             endcase

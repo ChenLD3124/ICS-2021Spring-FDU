@@ -91,7 +91,9 @@ module memory(
               dreq.addr=M.valA;
               W_pre.regw=M.regw;
               // W_pre.rm='1;
-              W_pre.wen='1;
+              if (M.regw!=5'b0) begin
+                W_pre.wen='1;
+              end 
               unique case (M.OP)
                 OP_LW:begin
                   dreq.size=MSIZE4;
@@ -102,7 +104,7 @@ module memory(
                   tmp=int'(M.valA[1:1])<<4;
                   W_pre.valA=(dresp.data>>tmp)&32'hffff;
                   if(M.OP==OP_LH)begin
-                    W_pre.valA=signed'(W_pre.valA<<16)>>>16;
+                    W_pre.valA={{16{W_pre.valA[15]}},W_pre.valA[15:0]};//signed'(W_pre.valA<<16)>>>16;
                   end
                 end
                 OP_LB,OP_LBU:begin
@@ -110,7 +112,7 @@ module memory(
                   tmp=int'(M.valA[1:0])<<3;
                   W_pre.valA=(dresp.data>>tmp)&32'hff;
                   if(M.OP==OP_LB)begin
-                    W_pre.valA=signed'(W_pre.valA<<24)>>>24;
+                    W_pre.valA={{24{W_pre.valA[7]}},W_pre.valA[7:0]};//signed'(W_pre.valA<<24)>>>24;
                   end
                 end
                 default:;

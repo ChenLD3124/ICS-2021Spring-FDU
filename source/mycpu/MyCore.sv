@@ -39,7 +39,7 @@ module MyCore (
     i32 regval_execute,regval_memory,regval_elo,regval_mlo;
     logic rdmem,rdmem_m;
     i32 dresp_data;
-    logic e_hi,e_lo,m_hi,m_lo,E_cpw,cp0_int,time_int,cp0_t;
+    logic e_hi,e_lo,m_hi,m_lo,E_cpw,time_int,cp0_t;
     i5 E_cpr;
     i8 int_info;
     logic exp,cp0_tmp,cp0_wen,cp0_badwen,time_clear;
@@ -48,7 +48,7 @@ module MyCore (
     //
     CP0_t CP0,CP0_nxt;
     //
-    assign cp0_int = CP0_nxt.status[0]&(~CP0_nxt.status[1])&(int_info=='0);
+    assign F_pre.cp0_int = CP0_nxt.status[0]&(~CP0_nxt.status[1])&(int_info!='0);
     assign int_info = ({ext_int, 2'b00}|CP0_nxt.cause[15:8]|{time_int, 7'b0})&CP0_nxt.status[15:8];
     assign E_cpw = M_pre.exp.wen;
     assign E_cpr = M_pre.exp.regw;
@@ -61,7 +61,7 @@ module MyCore (
     assign {e_hi,e_lo,m_hi,m_lo} = {M_pre.hi_w,M_pre.lo_w,M.hi_w,M.lo_w};
     assign regval_elo = M_pre.valB;
     assign regval_mlo = W_pre.valB;
-    assign cp0_t = E.t;
+    assign cp0_t = E_pre.t;
     //module
     fetch fetch_c(.*);
     decode decode_c(.*);
@@ -163,7 +163,8 @@ module MyCore (
         end else begin
         // reset
         // NOTE: if resetn is X, it will be evaluated to false.
-        F<=32'hbfc00000;
+        F.pc<=32'hbfc00000;
+        F.cp0_int<='0;
         D<='0;
         E<='0;
         M<='0;

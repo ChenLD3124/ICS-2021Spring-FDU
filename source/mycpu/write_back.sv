@@ -12,7 +12,7 @@ module write_back(
     assign wa3=W.regw;
     // assign wd3 = W.rm?dresp_data:W.valA;
     assign wd3 = W.valA;
-    assign write_enable=W.wen;
+    assign write_enable=W.wen&(W.regw!='0);
     assign hi_write = W.hi_w;
     assign lo_write = W.lo_w;
     assign hi_data = W.valA;
