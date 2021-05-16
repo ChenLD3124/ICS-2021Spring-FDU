@@ -23,6 +23,9 @@ module MyArbiter #(
         if(lock==1'b1)begin
             sel_req=sel_req_l;
             sel=sel_l;
+            if (ireqs[sel].valid) begin
+                sel_req=ireqs[sel];
+            end
             iresps[sel]=oresp;
         end else begin
             sel_req='0;sel='1;
