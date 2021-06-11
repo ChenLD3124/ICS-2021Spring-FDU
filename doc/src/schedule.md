@@ -15,9 +15,9 @@
   <thead>
     <tr>
       <th align="center">日期</th>
-      <th align="center">实验课安排</th>
+      <th align="center">课程安排</th>
       <th align="center">日期</th>
-      <th align="center">实验课安排</th>
+      <th align="center">课程安排</th>
     </tr>
   </thead>
   <tbody>
@@ -48,7 +48,8 @@
       </td>
       <td align="center">5.10</td>
       <td align="center">
-        <span class="red">实验 3 提交</span>
+        <span class="red">实验 3 提交</span><br>
+        <a href="project/task2.md">访存优化</a>
       </td>
     </tr>
     <tr>
@@ -60,7 +61,7 @@
       <td align="center">5.17</td>
       <td align="center">
         <span class="red">实验 4 提交</span><br>
-        <span class="red">组队结束</span>
+        <a href="https://github.com/FDUCSLG/ICS-2021Spring-FDU/blob/master/misc/slides/final-project-topics.pdf">Final Project Topics</a>
       </td>
     </tr>
     <tr>
@@ -71,6 +72,7 @@
       </td>
       <td align="center">5.24</td>
       <td align="center">
+        <a href="project/task3.md">外设</a>
       </td>
     </tr>
     <tr>
@@ -80,6 +82,7 @@
       </td>
       <td align="center">5.31</td>
       <td align="center">
+        <a href="https://github.com/FDUCSLG/ICS-2021Spring-FDU/blob/master/misc/slides/ram-on-fpga.pdf">RAM on FPGA</a>
       </td>
     </tr>
     <tr>
@@ -100,7 +103,13 @@
       </td>
       <td align="center">6.14</td>
       <td align="center">
-        <span class="green">端午节</span><br>
+        <span class="green">端午节</span>
+      </td>
+    </tr>
+    <tr>
+      <td colspan=2></td>
+      <td align="center">期末</td>
+      <td align="center">
         <span class="red">提交挑战项目</span>
       </td>
     </tr>
