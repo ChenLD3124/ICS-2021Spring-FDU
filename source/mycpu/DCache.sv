@@ -1,6 +1,11 @@
 `include "common.svh"
 
-module DCache (
+module DCache #(
+    parameter int SET_NUM = 4,
+    parameter int SET_BIT = 2,
+    parameter int LINE_NUM = 4,
+    parameter int LINE_BIT = 2
+)(
     input logic clk, resetn,
 
     input  dbus_req_t  dreq,
@@ -21,24 +26,24 @@ module DCache (
     state_t state;
     offset_t offset,start;
     dbus_req_t req;
-    assign start = dreq.addr[3:2];
+    assign start = dreq.addr[LINE_BIT+1:2];
     struct packed {
         strobe_t strobe;
         word_t wdata;
     } ram;
-    logic [3:0][3:0] ram_en;
-    logic [3:0][1:0] cp,cp_nxt;
-    i2 csn,F_offset;
-    word_t [3:0][3:0] ram_rdata;
+    logic [SET_NUM-1:0][LINE_NUM-1:0] ram_en;
+    logic [SET_NUM-1:0][LINE_BIT-1:0] cp,cp_nxt;
+    logic [SET_BIT-1:0] csn,F_offset;
+    word_t [SET_NUM-1:0][LINE_NUM-1:0] ram_rdata;
     logic nocache;
     assign nocache=(dreq.addr[31:28]==4'b1010)||(dreq.addr[31:28]==4'b1011);
     typedef struct packed {
         logic valid,dirty,now;
-        logic [25:0] index;
+        logic [27-SET_BIT:0] index;
     } cache_line;
-    cache_line [3:0][3:0] ca,ca_nxt;
+    cache_line [LINE_NUM-1:0][SET_NUM-1:0] ca,ca_nxt;
     //cache set number
-    assign csn = req.addr[5:4];
+    assign csn = req.addr[3+SET_BIT:4];
     // DBus driver
     assign dresp.addr_ok = state == IDLE;
     assign dresp.data_ok = state == READY;
@@ -53,14 +58,15 @@ module DCache (
     assign dcreq.len      = MLEN4;
     logic hit,dirt;
     // addr_t F_addr;
-    logic [1:0] hit_num,hit_num_r;
-    for (genvar i = 0; i < 16; i++) begin:cl
+    typedef logic [LINE_BIT-1:0] hit_t;
+    hit_t hit_num,hit_num_r;
+    for (genvar i = 0; i < LINE_NUM*SET_NUM; i++) begin:cl
         LUTRAM #(.NUM_BYTES(16)) ram_line(
-            .clk(clk), .en(ram_en[i[3:2]][i[1:0]]),
+            .clk(clk), .en(ram_en[i[SET_BIT+LINE_BIT-1:LINE_BIT]][i[LINE_BIT-1:0]]),
             .addr((state==FLUSH||state==FETCH)?F_offset:offset),
             .strobe(ram.strobe),
             .wdata(ram.wdata),
-            .rdata(ram_rdata[i[3:2]][i[1:0]])
+            .rdata(ram_rdata[i[SET_BIT+LINE_BIT-1:LINE_BIT]][i[LINE_BIT-1:0]])
         );
     end
     always_comb begin
@@ -69,24 +75,24 @@ module DCache (
         unique case (state)
             IDLE:begin
                 if (dreq.valid&&nocache==1'b0) begin
-                    for (int i=0; i<4; ++i) begin
-                        if(ca[dreq.addr[5:4]][i].valid&&ca[dreq.addr[5:4]][i].index==dreq.addr[31:6])begin
-                            hit='1;hit_num=i[1:0];
+                    for (int i=0; i<LINE_NUM; ++i) begin
+                        if(ca[dreq.addr[3+SET_BIT:4]][i].valid&&ca[dreq.addr[SET_BIT+3:4]][i].index==dreq.addr[31:4+SET_BIT])begin
+                            hit='1;hit_num=i[LINE_BIT-1:0];
                             break;
                         end
                     end
                     if(hit==1'b0)begin
-                        for (int i=0; i<5; ++i) begin
-                            hit_num=i2'(i[1:0]+cp[dreq.addr[5:4]]);
-                            if(ca_nxt[dreq.addr[5:4]][hit_num].now)begin
-                                ca_nxt[dreq.addr[5:4]][hit_num].now='0;
+                        for (int i=0; i<LINE_NUM+1; ++i) begin
+                            hit_num=hit_t'(i[LINE_BIT-1:0]+cp[dreq.addr[3+SET_BIT:4]]);
+                            if(ca_nxt[dreq.addr[3+SET_BIT:4]][hit_num].now)begin
+                                ca_nxt[dreq.addr[3+SET_BIT:4]][hit_num].now='0;
                             end
                             else begin
-                                cp_nxt[dreq.addr[5:4]]=i2'(hit_num+2'b01);
+                                cp_nxt[dreq.addr[3+SET_BIT:4]]=hit_t'(hit_num+1);
                                 break;
                             end
                         end
-                        dirt=ca[dreq.addr[5:4]][hit_num].dirty;
+                        dirt=ca[dreq.addr[3+SET_BIT:4]][hit_num].dirty;
                     end
                 end
                     
@@ -106,7 +112,7 @@ module DCache (
                 ram.wdata  = dcresp.data;
                 ca_nxt[csn][hit_num_r].dirty='0;
                 ca_nxt[csn][hit_num_r].valid='1;
-                ca_nxt[csn][hit_num_r].index=req.addr[31:6];
+                ca_nxt[csn][hit_num_r].index=req.addr[31:4+SET_BIT];
             end
             FLUSH:begin
                 if(dcresp.ready&&dcresp.last) ca_nxt[csn][hit_num_r].dirty='0;
