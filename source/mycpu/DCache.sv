@@ -24,16 +24,16 @@ module DCache #(
     } state_t;
     typedef i2 offset_t;
     state_t state;
-    offset_t offset,start;
+    offset_t offset,F_offset,start;
     dbus_req_t req;
-    assign start = dreq.addr[LINE_BIT+1:2];
+    assign start = dreq.addr[3:2];
     struct packed {
         strobe_t strobe;
         word_t wdata;
     } ram;
     logic [SET_NUM-1:0][LINE_NUM-1:0] ram_en;
     logic [SET_NUM-1:0][LINE_BIT-1:0] cp,cp_nxt;
-    logic [SET_BIT-1:0] csn,F_offset;
+    logic [SET_BIT-1:0] csn;
     word_t [SET_NUM-1:0][LINE_NUM-1:0] ram_rdata;
     logic nocache;
     assign nocache=(dreq.addr[31:28]==4'b1010)||(dreq.addr[31:28]==4'b1011);

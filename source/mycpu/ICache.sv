@@ -9,7 +9,7 @@ module ICache (
     input  cbus_resp_t icresp
 );
     // simply use DCache as ICache
-    DCache proxy(
+    DCache #(.SET_NUM(16),.SET_BIT(4),.LINE_NUM(16),.LINE_BIT(4)) proxy(
         .dreq(`IREQ_TO_DREQ(ireq)),
         .dresp(iresp),
         .dcreq(icreq),

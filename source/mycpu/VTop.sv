@@ -27,7 +27,7 @@ module VTop (
     assign dc2 = nocache_d?dcreq2:'0;
     MyCore core(.*);
     ICache icvt(.iresp(ir1),.*);
-    DCache dcvt(.dresp(dr1),.*);
+    DCache #(.SET_NUM(16),.SET_BIT(4),.LINE_NUM(16),.LINE_BIT(4)) dcvt(.dresp(dr1),.*);
     IBusToCBus icvt2(.icreq(icreq2),.icresp(icresp2),.iresp(ir2),.*);
     DBusToCBus dcvt2(.dcreq(dcreq2),.dcresp(dcresp2),.dresp(dr2),.*);
     assign iresp = nocache_i?ir2:ir1;
