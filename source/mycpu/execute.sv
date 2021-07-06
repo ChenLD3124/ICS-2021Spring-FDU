@@ -68,12 +68,11 @@ module execute(
                         valid_m='1;
                         if(E.valA[31]^E.valB[31]==1'b1)begin
                             tmp=(~c_m)+64'b1;
-                            M_pre.valA=tmp[63:32];
-                            M_pre.valB=tmp[31:0];
                         end else begin
-                            M_pre.valA=c_m[63:32];
-                            M_pre.valB=c_m[31:0];
+                            tmp=c_m;
                         end
+                        M_pre.valA=tmp[63:32];
+                        M_pre.valB=tmp[31:0];
                         M_pre.hi_w='1;
                         M_pre.lo_w='1;
                     end
@@ -123,11 +122,12 @@ module execute(
             OP_SLTI: M_pre.valA=i32'(signed'(E.valA)<signed'(E.valB));
             OP_SLTIU: M_pre.valA=i32'(E.valA<E.valB);
             OP_LUI: M_pre.valA=E.valB<<16;
-            OP_LW,OP_LB,OP_LH,OP_LHU,OP_LBU: begin
+            OP_LW,OP_LB,OP_LH,OP_LHU,OP_LBU,OP_LWL,OP_LWR: begin
                 M_pre.valA=E.valA+E.valB;
                 M_pre.rm='1;
+                M_pre.valB=E.valC;
             end
-            OP_SW,OP_SB,OP_SH: begin
+            OP_SW,OP_SB,OP_SH,OP_SWL,OP_SWR: begin
                 M_pre.valA=E.valA+E.valB;
                 M_pre.wm='1;
                 M_pre.valB=E.valC;
@@ -140,6 +140,62 @@ module execute(
             end
             OP_COP0:begin
                 M_pre.valA=E.valA;
+            end
+            OP_SP2:begin
+                unique case (E.FN)
+                    FN_CLZ:begin
+                        M_pre.valA=32;
+                        for (int i=31; i>=0; --i) begin
+                            if (E.valA[i]==1) begin
+                                M_pre.valA=31-i;
+                                break;
+                            end
+                        end
+                    end
+                    FN_CLO:begin
+                        M_pre.valA=32;
+                        for (int i=31; i>=0; --i) begin
+                            if (E.valA[i]==0) begin
+                                M_pre.valA=31-i;
+                                break;
+                            end
+                        end
+                    end
+                    FN_MUL,FN_MADD,FN_MSUB:begin
+                        a=E.valA[31]?((~E.valA)+32'b1):E.valA;
+                        b=E.valB[31]?((~E.valB)+32'b1):E.valB;
+                        valid_m='1;
+                        if(E.valA[31]^E.valB[31]==1'b1)begin
+                            tmp=(~c_m)+64'b1;
+                        end else begin
+                            tmp=c_m;
+                        end
+                        M_pre.valA=tmp[31:0];
+                        if (E.FN==FN_MADD) begin
+                            tmp+={E.valC,E.valD};
+                        end else if (E.FN=FN_SUB) begin
+                            tmp={E.valC,E.valD}-tmp;
+                        end
+                        if (E.FN!=FN_MUL) begin
+                            M_pre.valA=tmp[63:32];M_pre.valB=tmp[31:0];
+                            M_pre.hi_w='1;M_pre.lo_w='1;
+                        end
+                    end
+                    FN_MADDU,FN_MSUBU:begin
+                        a=E.valA;
+                        b=E.valB;
+                        valid_m='1;
+                        if (E.FN==FN_MADDU) begin
+                            c_m+={E.valC,E.valD};
+                        end else begin
+                            c_m={E.valC,E.valD}-c_m;
+                        end
+                        M_pre.valA=c_m[63:32];
+                        M_pre.valB=c_m[31:0];
+                        M_pre.hi_w='1;M_pre.lo_w='1;
+                    end
+                    default:;
+                endcase
             end
             default:;
         endcase

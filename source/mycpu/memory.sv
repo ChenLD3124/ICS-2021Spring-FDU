@@ -115,6 +115,16 @@ module memory(
                     W_pre.valA={{24{W_pre.valA[7]}},W_pre.valA[7:0]};//signed'(W_pre.valA<<24)>>>24;
                   end
                 end
+                OP_LWL:begin
+                  dreq.size=MSIZE4;
+                  tmp=int'(3-M.valA[1:0])<<3;
+                  W_pre.valA=(dresp.data<<tmp)|(M.valB&(~(32'hff000000>>>tmp)));
+                end
+                OP_LWR:begin
+                  dreq.size=MSIZE4;
+                  tmp=int'(M.valA[1:0])<<3;
+                  W_pre.valA=(M.valB&((32'hff000000>>>tmp)<<8))|(dresp.data>>tmp);
+                end
                 default:;
               endcase
 
@@ -135,6 +145,18 @@ module memory(
                   dreq.size=MSIZE2;
                   dreq.strobe=4'h3<<M.valA[1:0];
                   dreq.data=M.valB<<(int'(M.valA[1:0])<<3);
+                end
+                OP_SWL:begin
+                  dreq.size=MSIZE4;
+                  tmp=3-M.valA[1:0];
+                  dreq.strobe=4'hf>>tmp;
+                  dreq.data=M.valB>>(tmp<<3);
+                end
+                OP_SWR:begin
+                  dreq.size=MSIZE4;
+                  tmp=M.valA[1:0];
+                  dreq.strobe=4'hf<<tmp;
+                  dreq.data=M.valB<<(tmp<<3);
                 end
                 default:;
               endcase

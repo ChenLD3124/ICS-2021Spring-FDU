@@ -2,18 +2,23 @@
 `define __PIPELINE_SVH__
 `include "common.svh"
 typedef struct packed {
-    logic INT,ADEL,ADES,SYS,BP,RI,OV,wen,EXL,eret,t;
+    logic INT,MOD,TLBL,TLBS,ADEL,ADES,SYS,BP,RI,CPU,OV,TR,wen,EXL,eret,t;
     logic [4:0] regw;
 } EXP_sig;
 
 typedef enum i5 { 
-    INT=5'b00000,
-    ADEL=5'b00100,
-    ADES=5'b00101,
-    SYS=5'b01000,
-    BP=5'b01001,
-    RI=5'b01010,
-    OV=5'b01100
+    INT  = 5'h00,
+    MOD  = 5'h01,
+    TLBL = 5'h02,
+    TLBS = 5'h03,
+    ADEL = 5'h04,
+    ADES = 5'h05,
+    SYS  = 5'h08,
+    BP   = 5'h09,
+    RI   = 5'h0a,
+    CPU  = 5'h0b,
+    OV   = 5'h0c,
+    TR   = 5'h0d
 } ExcCode_t;
 
 typedef struct packed {
@@ -30,7 +35,7 @@ typedef struct packed {
 typedef struct packed {
     i6 OP,FN;
     i5 regw,sa;
-    i32 valA,valB,valC,pc;
+    i32 valA,valB,valC,valD,pc;
     logic hi_w,lo_w,t;
     EXP_sig exp;
 } E_type;
@@ -67,6 +72,7 @@ typedef enum i6 {
     OP_XORI  = 6'b001110,
     OP_LUI   = 6'b001111,
     OP_COP0  = 6'b010000,
+    OP_SP2   = 6'b011100,
     OP_LB    = 6'b100000,
     OP_LH    = 6'b100001,
     OP_LW    = 6'b100011,
@@ -74,7 +80,11 @@ typedef enum i6 {
     OP_LHU   = 6'b100101,
     OP_SB    = 6'b101000,
     OP_SH    = 6'b101001,
-    OP_SW    = 6'b101011
+    OP_SW    = 6'b101011,
+    OP_LWL   = 6'b100010,
+    OP_LWR   = 6'b100110,
+    OP_SWL   = 6'b101010,
+    OP_SWR   = 6'b101110
 } opcode_t;
 typedef enum i6 {
     FN_SLL     = 6'b000000,
@@ -104,8 +114,25 @@ typedef enum i6 {
     FN_XOR     = 6'b100110,
     FN_NOR     = 6'b100111,
     FN_SLT     = 6'b101010,
-    FN_SLTU    = 6'b101011
+    FN_SLTU    = 6'b101011,
+    FN_TEQ     = 6'b110100,
+    FN_TGE     = 6'b110000,
+    FN_TGEU    = 6'b110001,
+    FN_TLT     = 6'b110010,
+    FN_TLTU    = 6'b110011,
+    FN_TNE     = 6'b110110,
+    FN_MOVN    = 6'b001011,
+    FN_MOVZ    = 6'b001010
 } funct_t;
+typedef enum i6 { 
+    FN_CLZ   = 6'b100000,
+    FN_CLO   = 6'b100001,
+    FN_MUL   = 6'b000010,
+    FN_MADD  = 6'b000000,
+    FN_MADDU = 6'b000001,
+    FN_MSUB  = 6'b000100,
+    FN_MSUBU = 6'b000101
+} funct2_t;
 parameter BGEZ = 5'b00001;
 parameter BLTZ = 5'b00000;
 parameter BLTZAL =5'b10000 ;
