@@ -84,7 +84,7 @@ module decode(
                     ra1=D.imp[25:21];
                 end
                 else begin
-                    ra1=D.imp[25:21];ra2=D.imp[20:16]
+                    ra1=D.imp[25:21];ra2=D.imp[20:16];
                 end
             end
             default:;

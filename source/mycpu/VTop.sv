@@ -14,7 +14,9 @@ module VTop (
     ibus_req_t  ireq;
     ibus_resp_t iresp,ir1,ir2;
     dbus_req_t  dreq;
+    /* verilator lint_off UNOPTFLAT */
     dbus_resp_t dresp,dr1,dr2;
+    /* verilator lint_on UNOPTFLAT */
     cbus_req_t  icreq,  dcreq,icreq2,  dcreq2,ic2,dc2;
     cbus_resp_t icresp, dcresp,icresp2, dcresp2;
 

@@ -215,7 +215,7 @@ module execute(
                         M_pre.valA=tmp[31:0];
                         if (E.FN==FN_MADD) begin
                             tmp+={E.valC,E.valD};
-                        end else if (E.FN=FN_SUB) begin
+                        end else if (E.FN==FN_MSUB) begin
                             tmp={E.valC,E.valD}-tmp;
                         end
                         if (E.FN!=FN_MUL) begin
@@ -228,12 +228,12 @@ module execute(
                         b=E.valB;
                         valid_m='1;
                         if (E.FN==FN_MADDU) begin
-                            c_m+={E.valC,E.valD};
+                            tmp={E.valC,E.valD}+c_m;
                         end else begin
-                            c_m={E.valC,E.valD}-c_m;
+                            tmp={E.valC,E.valD}-c_m;
                         end
-                        M_pre.valA=c_m[63:32];
-                        M_pre.valB=c_m[31:0];
+                        M_pre.valA=tmp[63:32];
+                        M_pre.valB=tmp[31:0];
                         M_pre.hi_w='1;M_pre.lo_w='1;
                     end
                     default:;
