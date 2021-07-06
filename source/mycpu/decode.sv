@@ -203,16 +203,34 @@ module decode(
                 pc_nxt={{14{D.imp[15]}},D.imp[15:0],2'b00};
                 pc_decode=D.pc+pc_nxt+32'h4;//!!!
                 E_pre.valC=hd1;
-                E_pre.t='1;
                 unique case (D.imp[20:16])
-                    BGEZ:begin if(signed'(E_pre.valC)>=0)begin ifj='1;end end
-                    BLTZ:begin if(signed'(E_pre.valC)<0)begin ifj='1;end end
+                    BGEZ:begin E_pre.t='1;if(signed'(E_pre.valC)>=0)begin ifj='1;end end
+                    BLTZ:begin E_pre.t='1;if(signed'(E_pre.valC)<0)begin ifj='1;end end
                     BLTZAL,BGEZAL:begin
+                        E_pre.t='1;
                         if(D.imp[20:16]==BLTZAL&&signed'(E_pre.valC)<0)begin ifj='1;end
                         else if(D.imp[20:16]==BGEZAL&&signed'(E_pre.valC)>=0)begin ifj='1;end
                         E_pre.regw=5'b11111;
                         E_pre.valA=D.pc;
                         E_pre.valB=32'b1000;
+                    end
+                    TEQI:begin
+                        if(signed'(hd1)==i32'(signed'(D.imp[15:0]))) E_pre.exp.TR='1;
+                    end
+                    TGEI:begin
+                        if(signed'(hd1)>=i32'(signed'(D.imp[15:0]))) E_pre.exp.TR='1;
+                    end
+                    TLTI:begin
+                        if(signed'(hd1)<i32'(signed'(D.imp[15:0]))) E_pre.exp.TR='1;
+                    end
+                    TNEI:begin
+                        if(signed'(hd1)!=i32'(signed'(D.imp[15:0]))) E_pre.exp.TR='1;
+                    end
+                    TGEIU:begin
+                        if(hd1>=i32'(D.imp[15:0])) E_pre.exp.TR='1;
+                    end
+                    TLTIU:begin
+                        if(hd1<i32'(D.imp[15:0])) E_pre.exp.TR='1;
                     end
                     default:begin
                         E_pre.exp.RI='1;

@@ -62,6 +62,9 @@ module memory(
       else if (M.exp.OV) begin
         exp='1;excode=OV;
       end
+      else if (M.exp.TR) begin
+        exp='1;excode=TR;
+      end
       else if (M_ADEL) begin
         exp='1;excode=ADEL;cp0_badwen='1;
         cp0_badvaddr=M.valA;
@@ -83,7 +86,7 @@ module memory(
         dreq='0;
         W_pre='0;tmp='0;
         W_pre.pc=M.pc;
-        W_pre.t=M.t;
+        // W_pre.t=M.t;
         {W_pre.hi_w,W_pre.lo_w}={M.hi_w,M.lo_w};
         if(exp==1'b0) begin
           dreq.valid = (M.rm|M.wm)?valid:'0;

@@ -19,7 +19,7 @@ module execute(
         M_pre.regw=E.regw;
         M_pre.pc=E.pc;
         M_pre.exp=E.exp;
-        M_pre.t=E.t;
+        // M_pre.t=E.t;
         unique case (E.OP)
             OP_RTYPE:begin
                 unique case (E.FN)
@@ -103,6 +103,48 @@ module execute(
                         end
                         M_pre.hi_w='1;
                         M_pre.lo_w='1;
+                    end
+                    FN_MOVZ:begin
+                        M_pre.valA=E.valA;
+                        if (E.valB!=0) begin
+                            M_pre.regw=0;
+                        end
+                    end
+                    FN_MOVN:begin
+                        M_pre.valA=E.valA;
+                        if (E.valB==0) begin
+                            M_pre.regw=0;
+                        end
+                    end
+                    FN_TEQ:begin
+                        if (E.valA==E.valB) begin
+                            M_pre.exp.TR='1;
+                        end
+                    end
+                    FN_TGE:begin
+                        if (signed'(E.valA)>=signed'(E.valB)) begin
+                            M_pre.exp.TR='1;
+                        end
+                    end
+                    FN_TGEU:begin
+                        if (E.valA>=E.valB) begin
+                            M_pre.exp.TR='1;
+                        end
+                    end
+                    FN_TLT:begin
+                        if (signed'(E.valA)<signed'(E.valB)) begin
+                            M_pre.exp.TR='1;
+                        end
+                    end
+                    FN_TLTU:begin
+                        if (E.valA<E.valB) begin
+                            M_pre.exp.TR='1;
+                        end
+                    end
+                    FN_TNE:begin
+                        if (E.valA!=E.valB) begin
+                            M_pre.exp.TR='1;
+                        end
                     end
                     default:begin M_pre.valA=E.valA;M_pre.valB=E.valB;end
                 endcase
