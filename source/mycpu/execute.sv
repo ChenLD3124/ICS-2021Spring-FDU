@@ -164,12 +164,12 @@ module execute(
             OP_SLTI: M_pre.valA=i32'(signed'(E.valA)<signed'(E.valB));
             OP_SLTIU: M_pre.valA=i32'(E.valA<E.valB);
             OP_LUI: M_pre.valA=E.valB<<16;
-            OP_LW,OP_LB,OP_LH,OP_LHU,OP_LBU,OP_LWL,OP_LWR: begin
+            OP_LW,OP_LB,OP_LH,OP_LHU,OP_LBU,OP_LWL,OP_LWR,OP_LL: begin
                 M_pre.valA=E.valA+E.valB;
                 M_pre.rm='1;
                 M_pre.valB=E.valC;
             end
-            OP_SW,OP_SB,OP_SH,OP_SWL,OP_SWR: begin
+            OP_SW,OP_SB,OP_SH,OP_SWL,OP_SWR,OP_SC: begin
                 M_pre.valA=E.valA+E.valB;
                 M_pre.wm='1;
                 M_pre.valB=E.valC;

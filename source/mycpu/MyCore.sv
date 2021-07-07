@@ -47,6 +47,29 @@ module MyCore (
     i32 cp0_wdata,cp0_badvaddr;
     //
     CP0_t CP0,CP0_nxt;
+    i32 CP0_d;
+    always_comb begin
+        unique case ({D.imp[15:11],D.imp[2:0]})
+            INDEX   :CP0_d=CP0_nxt.index;
+            RANDOM  :CP0_d=CP0_nxt.random;
+            ENTRYLO0:CP0_d=CP0_nxt.entrylo0;
+            ENTRYLO1:CP0_d=CP0_nxt.entrylo1;
+            CONTEXT :CP0_d=CP0_nxt.context;
+            PAGEMASK:CP0_d=CP0_nxt.pagemask;
+            WIRED   :CP0_d=CP0_nxt.wired;
+            BADVADDR:CP0_d=CP0_nxt.badvaddr;
+            COUNT   :CP0_d=CP0_nxt.count;
+            ENTRYHI :CP0_d=CP0_nxt.entryhi;
+            COMPARE :CP0_d=CP0_nxt.compare;
+            STATUS  :CP0_d=CP0_nxt.status;
+            CAUSE   :CP0_d=CP0_nxt.cause;
+            EPC     :CP0_d=CP0_nxt.EPC;
+            PRID    :CP0_d=CP0_nxt.prid;
+            CONFIG  :CP0_d=CP0_nxt.config;
+            CONFIG1 :CP0_d=CP0_nxt.config1;
+            default: CP0_d='0;
+        endcase
+    end
     //
     assign F_pre.cp0_int = CP0_nxt.status[0]&(~CP0_nxt.status[1])&(int_info!='0);
     assign int_info = ({ext_int, 2'b00}|CP0_nxt.cause[15:8]|{time_int, 7'b0})&CP0_nxt.status[15:8];

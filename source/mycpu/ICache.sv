@@ -6,7 +6,8 @@ module ICache (
     input  ibus_req_t  ireq,
     output ibus_resp_t iresp,
     output cbus_req_t  icreq,
-    input  cbus_resp_t icresp
+    input  cbus_resp_t icresp,
+    input logic nocache
 );
     // simply use DCache as ICache
     DCache #(.SET_NUM(16),.SET_BIT(4),.LINE_NUM(16),.LINE_BIT(4)) proxy(

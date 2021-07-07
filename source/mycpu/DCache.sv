@@ -11,7 +11,8 @@ module DCache #(
     input  dbus_req_t  dreq,
     output dbus_resp_t dresp,
     output cbus_req_t  dcreq,
-    input  cbus_resp_t dcresp
+    input  cbus_resp_t dcresp,
+    input logic nocache
 );
     /**
      * TODO (Lab3) your code here :)
@@ -35,8 +36,6 @@ module DCache #(
     logic [SET_NUM-1:0][LINE_BIT-1:0] cp,cp_nxt;
     logic [SET_BIT-1:0] csn;
     word_t [SET_NUM-1:0][LINE_NUM-1:0] ram_rdata;
-    logic nocache;
-    assign nocache=(dreq.addr[31:28]==4'b1010)||(dreq.addr[31:28]==4'b1011);
     typedef struct packed {
         logic valid,dirty,now;
         logic [27-SET_BIT:0] index;

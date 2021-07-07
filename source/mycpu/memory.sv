@@ -27,13 +27,13 @@ module memory(
     assign valid_nxt = valid;
     always_comb begin
       M_ADEL='0;M_ADES='0;
-      if (M.OP==OP_LW&&M.rm&&(M.valA[0]|M.valA[1])) begin
+      if ((M.OP==OP_LW||M.OP==OP_LL)&&M.rm&&(M.valA[0]|M.valA[1])) begin
         M_ADEL='1;
       end
       else if ((M.OP==OP_LH||M.OP==OP_LHU)&&M.rm&&M.valA[0]) begin
         M_ADEL='1;
       end
-      else if (M.OP==OP_SW&&M.wm&&(M.valA[0]|M.valA[1])) begin
+      else if ((M.OP==OP_SW||M.OP==OP_SC)&&M.wm&&(M.valA[0]|M.valA[1])) begin
         M_ADES='1;
       end
       else if (M.OP==OP_SH&&M.wm&&M.valA[0]) begin
@@ -98,7 +98,7 @@ module memory(
                 W_pre.wen='1;
               end 
               unique case (M.OP)
-                OP_LW:begin
+                OP_LW,OP_LL:begin
                   dreq.size=MSIZE4;
                   W_pre.valA=dresp.data;
                 end
@@ -141,7 +141,7 @@ module memory(
                   dreq.strobe=4'h1<<M.valA[1:0];
                   dreq.data=M.valB<<(int'(M.valA[1:0])<<3);
                 end
-                OP_SW:begin
+                OP_SW,OP_SC:begin
                   dreq.size=MSIZE4;
                   dreq.strobe=4'hf;
                   dreq.data=M.valB;

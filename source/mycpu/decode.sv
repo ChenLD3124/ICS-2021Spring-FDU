@@ -14,9 +14,9 @@ module decode(
     input i32 hi_new,lo_new,
     input logic e_hi,e_lo,m_hi,m_lo,
     input i32 regval_elo,regval_mlo,
-    input CP0_t CP0_nxt,
     input i1 E_cpw,
-    input i5 E_cpr
+    input i5 E_cpr,
+    input i32 CP0_d
 );
     i32 pc_nxt,hd1,hd2,hd3,hd4,cpa;
     assign hd3 = e_hi?regval_execute:(m_hi?regval_memory:hi_new);
@@ -49,21 +49,9 @@ module decode(
         end
     end
     always_comb begin
-        cpa='0;
-        if (D.imp[31:26]==OP_COP0&&D.imp[25:21]==5'b00000) begin
-            unique case (D.imp[15:11])
-                5'b01000: cpa=CP0_nxt.badvaddr;
-                5'b01001: cpa=CP0_nxt.count;
-                5'b01011: cpa=CP0_nxt.compare;
-                5'b01100: cpa=CP0_nxt.status;
-                5'b01101: cpa=CP0_nxt.cause;
-                5'b01110: cpa=CP0_nxt.EPC;
-                default: cpa='0;
-            endcase
-            if (E_cpw&&D.imp[15:11]==E_cpr) begin
-                cpa=regval_execute;
-            end
-            
+        cpa=CP0_d;
+        if (E_cpw&&D.imp[15:11]==E_cpr) begin
+            cpa=regval_execute;
         end
     end
     always_comb begin
@@ -145,12 +133,13 @@ module decode(
                         E_pre.valA=hd1;E_pre.valB=hd2;
                         E_pre.sa=D.imp[10:6];
                     end
+                    FN_SYNC:;
                     default:begin
                         E_pre.exp.RI='1;
                     end
                 endcase
             end
-            OP_ADDIU,OP_ADDI,OP_SLTI,OP_SLTIU,OP_ANDI,OP_ORI,OP_XORI,OP_LUI,OP_LW,OP_LB,OP_LH,OP_LBU,OP_LHU:begin
+            OP_ADDIU,OP_ADDI,OP_SLTI,OP_SLTIU,OP_ANDI,OP_ORI,OP_XORI,OP_LUI,OP_LW,OP_LL,OP_LB,OP_LH,OP_LBU,OP_LHU:begin
                 E_pre.regw=D.imp[20:16];
                 E_pre.valA=hd1;
                 if(E_pre.OP!=OP_ANDI&&E_pre.OP!=OP_ORI&&E_pre.OP!=OP_XORI&&E_pre.OP!=OP_LUI)begin
@@ -159,7 +148,7 @@ module decode(
                     E_pre.valB=i32'(D.imp[15:0]);
                 end
             end
-            OP_SW,OP_SB,OP_SH:begin
+            OP_SW,OP_SB,OP_SH,OP_SC:begin
                 E_pre.valA=hd1;E_pre.valC=hd2;
                 E_pre.valB=i32'(signed'(D.imp[15:0]));
             end
@@ -281,6 +270,7 @@ module decode(
                 E_pre.valB=i32'(signed'(D.imp[15:0]));
                 if(D.imp[31:26]==OP_LWL||D.imp[31:26]==OP_LWR) E_pre.regw=D.imp[20:16];
             end
+            OP_PREF:;
             default:begin
                 E_pre.exp.RI='1;
             end

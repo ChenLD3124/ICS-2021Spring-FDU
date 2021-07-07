@@ -20,9 +20,27 @@ typedef enum i5 {
     OV   = 5'h0c,
     TR   = 5'h0d
 } ExcCode_t;
-
+typedef enum i8 { 
+    INDEX   = {5'h00,3'h0},
+    RANDOM  = {5'h01,3'h0},
+    ENTRYLO0= {5'h02,3'h0},
+    ENTRYLO1= {5'h03,3'h0},
+    CONTEXT = {5'h04,3'h0},
+    PAGEMASK= {5'h05,3'h0},
+    WIRED   = {5'h06,3'h0},
+    BADVADDR= {5'h08,3'h0},
+    COUNT   = {5'h09,3'h0},
+    ENTRYHI = {5'h0a,3'h0},
+    COMPARE = {5'h0b,3'h0},
+    STATUS  = {5'h0c,3'h0},
+    CAUSE   = {5'h0d,3'h0},
+    EPC     = {5'h0e,3'h0},
+    PRID    = {5'h0f,3'h0},
+    CONFIG  = {5'h10,3'h0},
+    CONFIG1 = {5'h10,3'h1}
+} CP0_reg_t;
 typedef struct packed {
-    i32 badvaddr,count,compare,EPC,status,cause;
+    i32 index,random,entrylo0,entrylo1,context,pagemask,wired,badvaddr,count,entryhi,compare,EPC,status,cause,prid,config,config1;
 } CP0_t;
 typedef struct packed {
     i32 pc;
@@ -53,6 +71,14 @@ typedef struct packed {
     logic wen,hi_w,lo_w;
 } W_type;
 // typedef logic[31:0] word_t;
+typedef struct packed {
+    logic [18:0] vpn2;
+    logic [7:0] asid;
+    logic G;
+    logic [19:0] pfn0, pfn1;
+    logic [2:0] C0, C1;
+    logic V0, V1, D0, D1;
+} tlb_entry_t;
 typedef logic[4:0] creg_addr_t;
 typedef enum i6 {
     OP_RTYPE = 6'b000000,
@@ -84,7 +110,10 @@ typedef enum i6 {
     OP_LWL   = 6'b100010,
     OP_LWR   = 6'b100110,
     OP_SWL   = 6'b101010,
-    OP_SWR   = 6'b101110
+    OP_SWR   = 6'b101110,
+    OP_LL    = 6'b110000,
+    OP_SC    = 6'b111000,
+    OP_PREF  = 6'b110011
 } opcode_t;
 typedef enum i6 {
     FN_SLL     = 6'b000000,
@@ -122,7 +151,8 @@ typedef enum i6 {
     FN_TLTU    = 6'b110011,
     FN_TNE     = 6'b110110,
     FN_MOVN    = 6'b001011,
-    FN_MOVZ    = 6'b001010
+    FN_MOVZ    = 6'b001010,
+    FN_SYNC    = 6'b001111
 } funct_t;
 typedef enum i6 { 
     FN_CLZ   = 6'b100000,
