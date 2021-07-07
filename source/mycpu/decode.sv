@@ -16,7 +16,8 @@ module decode(
     input i32 regval_elo,regval_mlo,
     input i1 E_cpw,
     input i5 E_cpr,
-    input i32 CP0_d
+    input i32 CP0_d,D_EPC,
+    input i1 D_EXL
 );
     i32 pc_nxt,hd1,hd2,hd3,hd4,cpa;
     assign hd3 = e_hi?regval_execute:(m_hi?regval_memory:hi_new);
@@ -87,7 +88,7 @@ module decode(
         pc_decode='0;
         ifj='0;
         E_pre.exp=D.exp;
-        E_pre.exp.EXL=CP0_nxt.status[1];
+        E_pre.exp.EXL=D_EXL;
         // E_pre.exp.INT=cp0_int;
         //decode
         unique case (E_pre.OP)
@@ -239,7 +240,7 @@ module decode(
                     end
                     default:begin
                         if (D.imp[25]) begin
-                            E_pre.valA=CP0_nxt.EPC;
+                            E_pre.valA=D_EPC;
                             E_pre.exp.eret='1;
                         end
                         else begin

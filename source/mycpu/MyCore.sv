@@ -47,14 +47,17 @@ module MyCore (
     i32 cp0_wdata,cp0_badvaddr;
     //
     CP0_t CP0,CP0_nxt;
-    i32 CP0_d;
+    i32 CP0_d,D_EPC;
+    i1 D_EXL;
+    assign D_EXL = CP0_nxt.status[1];
+    assign D_EPC = CP0_nxt.EPC;
     always_comb begin
         unique case ({D.imp[15:11],D.imp[2:0]})
             INDEX   :CP0_d=CP0_nxt.index;
             RANDOM  :CP0_d=CP0_nxt.random;
             ENTRYLO0:CP0_d=CP0_nxt.entrylo0;
             ENTRYLO1:CP0_d=CP0_nxt.entrylo1;
-            CONTEXT :CP0_d=CP0_nxt.context;
+            CONTEXT :CP0_d=CP0_nxt.Context;
             PAGEMASK:CP0_d=CP0_nxt.pagemask;
             WIRED   :CP0_d=CP0_nxt.wired;
             BADVADDR:CP0_d=CP0_nxt.badvaddr;
@@ -65,7 +68,7 @@ module MyCore (
             CAUSE   :CP0_d=CP0_nxt.cause;
             EPC     :CP0_d=CP0_nxt.EPC;
             PRID    :CP0_d=CP0_nxt.prid;
-            CONFIG  :CP0_d=CP0_nxt.config;
+            CONFIG  :CP0_d=CP0_nxt.Config;
             CONFIG1 :CP0_d=CP0_nxt.config1;
             default: CP0_d='0;
         endcase

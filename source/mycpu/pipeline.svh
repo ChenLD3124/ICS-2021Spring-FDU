@@ -40,7 +40,7 @@ typedef enum i8 {
     CONFIG1 = {5'h10,3'h1}
 } CP0_reg_t;
 typedef struct packed {
-    i32 index,random,entrylo0,entrylo1,context,pagemask,wired,badvaddr,count,entryhi,compare,EPC,status,cause,prid,config,config1;
+    i32 index,random,entrylo0,entrylo1,Context,pagemask,wired,badvaddr,count,entryhi,compare,EPC,status,cause,prid,Config,config1;
 } CP0_t;
 typedef struct packed {
     i32 pc;
