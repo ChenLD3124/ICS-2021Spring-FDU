@@ -63,15 +63,13 @@ module MyCore (
             COMPARE :CP0_d=CP0_nxt.compare;
             STATUS  :CP0_d=CP0_nxt.status;
             CAUSE   :CP0_d=CP0_nxt.cause;
-            EPC     :CP0_d=CP0_nxt.EPC;
+            EPC_    :CP0_d=CP0_nxt.EPC;
             PRID    :CP0_d=CP0_nxt.prid;
             CONFIG  :CP0_d=CP0_nxt.Config;
             CONFIG1 :CP0_d=CP0_nxt.config1;
             default: CP0_d='0;
         endcase
     end
-    logic cp0_flush;
-    assign cp0_flush = E_pre.exp.wen|M_pre.exp.wen;
     //
     assign F_pre.cp0_int = CP0_nxt.status[0]&(~CP0_nxt.status[1])&(int_info!='0);
     assign int_info = ({ext_int, 2'b00}|CP0_nxt.cause[15:8]|{time_int, 7'b0})&CP0_nxt.status[15:8];
@@ -85,6 +83,8 @@ module MyCore (
     assign regval_elo = M_pre.valB;
     assign regval_mlo = W_pre.valB;
     assign cp0_t = E_pre.t;
+    i32 D_pc;
+    assign D_pc = D.pc;
     //module
     fetch fetch_c(.*);
     decode decode_c(.*);
@@ -97,6 +97,7 @@ module MyCore (
     pc_selector pcSelector(
         .nxt_pc(F_pre.pc),
         .exp,.eret(M.exp.eret),.ifj,.pc_decode,.pc_fetch,.EPC(M.valA),
+        .cp0_flush(M.exp.wen),.E_pc(M.pc_l)
     );
     //
     always_comb begin
@@ -138,16 +139,13 @@ module MyCore (
     //control
     always_comb begin
         F_st='0;D_st='0;D_bb='0;E_bb='0;EM_st='0;M_bb='0;W_bb='0;
-        if(cp0_flush) begin
-            F_st='1;D_bb='1;
-        end
         if (pcf1==1'b1||pcf2==1'b1) begin
             F_st='1;D_st='1;E_bb='1;
         end
         if (pcf3==1'b1||pcf4==1'b1) begin
             F_st='1;D_st='1;EM_st='1;W_bb='1;
         end
-        if (F_st&(exp|M.exp.eret)) begin
+        if (F_st&(exp|M.exp.eret|M.exp.wen)) begin
             D_st='1;EM_st='1;W_bb='1;
         end
     end
@@ -158,25 +156,25 @@ module MyCore (
                 F<=F_pre;
             end
             if(D_st!=1'b1) begin
-                if ( D_bb==1'b1||exp||M.exp.eret ) begin
+                if ( D_bb|exp|M.exp.eret|M.exp.wen) begin
                     D<='0;
                 end else begin
                     D<=D_pre;
                 end
             end
             if(EM_st!= 1'b1) begin
-                if (E_bb==1'b1||exp||M.exp.eret) begin
+                if (E_bb|exp|M.exp.eret|M.exp.wen) begin
                     E<='0;
                 end else begin
                     E<=E_pre;
                 end
-                if (M_bb==1'b1||exp||M.exp.eret) begin
+                if (M_bb|exp|M.exp.eret|M.exp.wen) begin
                     M<='0;
                 end else begin
                     M<=M_pre;
                 end
             end
-            if (W_bb==1'b1||exp||M.exp.eret) begin
+            if (W_bb|exp|M.exp.eret|M.exp.wen) begin
                 W<='0;
             end else begin
                 W<=W_pre;

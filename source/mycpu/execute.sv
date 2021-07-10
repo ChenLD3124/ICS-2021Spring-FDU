@@ -1,6 +1,7 @@
 `include "pipeline.svh"
 module execute(
     input logic clk,resetn,
+    input i32 D_pc,
     output logic pcf4,
     input E_type E,
     output M_type M_pre
@@ -19,6 +20,7 @@ module execute(
         M_pre.regw=E.regw;
         M_pre.pc=E.pc;
         M_pre.exp=E.exp;
+        M_pre.pc_l=D_pc;
         // M_pre.t=E.t;
         unique case (E.OP)
             OP_RTYPE:begin

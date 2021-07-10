@@ -34,7 +34,7 @@ typedef enum i8 {
     COMPARE = {5'h0b,3'h0},
     STATUS  = {5'h0c,3'h0},
     CAUSE   = {5'h0d,3'h0},
-    EPC     = {5'h0e,3'h0},
+    EPC_    = {5'h0e,3'h0},
     PRID    = {5'h0f,3'h0},
     CONFIG  = {5'h10,3'h0},
     CONFIG1 = {5'h10,3'h1}
@@ -59,7 +59,7 @@ typedef struct packed {
 } E_type;
 typedef struct packed {
     i6 OP;
-    i32 valA,valB,pc;
+    i32 valA,valB,pc,pc_l;
     logic rm,wm,hi_w,lo_w;
     i5 regw;
     EXP_sig exp;
