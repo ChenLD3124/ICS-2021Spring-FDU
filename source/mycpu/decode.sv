@@ -14,8 +14,6 @@ module decode(
     input i32 hi_new,lo_new,
     input logic e_hi,e_lo,m_hi,m_lo,
     input i32 regval_elo,regval_mlo,
-    input i1 E_cpw,
-    input i5 E_cpr,
     input i32 CP0_d,D_EPC,
     input i1 D_EXL
 );
@@ -49,12 +47,7 @@ module decode(
             end
         end
     end
-    always_comb begin
-        cpa=CP0_d;
-        if (E_cpw&&D.imp[15:11]==E_cpr) begin
-            cpa=regval_execute;
-        end
-    end
+    assign cpa=CP0_d;
     always_comb begin
         ra1='0;ra2='0;
         unique case (D.imp[31:26])

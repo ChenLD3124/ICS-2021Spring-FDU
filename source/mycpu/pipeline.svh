@@ -175,4 +175,33 @@ typedef enum i5 {
     TLTIU  = 5'b01011,
     TNEI   = 5'b01110
 } funct3_t;
+parameter int TABEL_ENTRIES=16;
+typedef struct packed {
+	logic is_tlbwi;
+	i32 entryhi;
+	i32 entrylo0, entrylo1;
+	i32 index;
+} tu_op_req_t;
+    
+typedef struct packed {
+	i32 entryhi;
+	i32 entrylo0, entrylo1;
+	i32 index;
+	logic i_tlb_invalid; // && req
+	logic i_tlb_modified; // && is store
+	logic d_tlb_invalid; // && req
+	logic d_tlb_modified; // && is store
+	logic i_tlb_refill;
+	logic d_tlb_refill;
+	logic i_mapped;
+	logic d_mapped;
+} tu_op_resp_t;
+typedef struct packed {
+	logic  req;
+	word_t vaddr;
+} tu_addr_req_t;
+typedef struct packed {
+	logic  is_uncached;
+	word_t paddr;
+} tu_addr_resp_t;
 `endif

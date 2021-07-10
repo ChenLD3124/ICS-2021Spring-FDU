@@ -1,12 +1,10 @@
 `include "access.svh"
-`include "common.svh"
+`include "pipeline.svh"
 
 module VTop (
     input logic clk, resetn,
-
     output cbus_req_t  oreq,
     input  cbus_resp_t oresp,
-
     input i6 ext_int
 );
     `include "bus_decl"
@@ -48,6 +46,7 @@ module VTop (
     /**
      * TODO (optional) add address translation for oreq.addr :)
      */
+    // mmu mymmu(.*);
     memtrans transinsti(.vaddr(ireq.addr),.paddr(ipaddr));
     always_comb begin
         ireq_p=ireq;

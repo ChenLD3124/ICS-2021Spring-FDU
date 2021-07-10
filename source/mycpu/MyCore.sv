@@ -2,12 +2,10 @@
 `include "pipeline.svh"
 module MyCore (
     input logic clk, resetn,
-
     output ibus_req_t  ireq,
     input  ibus_resp_t iresp,
     output dbus_req_t  dreq,
     input  dbus_resp_t dresp,
-
     input i6 ext_int
 );
     /**
@@ -39,13 +37,12 @@ module MyCore (
     i32 regval_execute,regval_memory,regval_elo,regval_mlo;
     logic rdmem,rdmem_m;
     i32 dresp_data;
-    logic e_hi,e_lo,m_hi,m_lo,E_cpw,time_int,cp0_t;
-    i5 E_cpr;
+    logic e_hi,e_lo,m_hi,m_lo,time_int,cp0_t;
     i8 int_info;
     logic exp,cp0_tmp,cp0_wen,cp0_badwen,time_clear;
     i5 cp0_regw,excode;
     i32 cp0_wdata,cp0_badvaddr;
-    //
+    //CP0
     CP0_t CP0,CP0_nxt;
     i32 CP0_d,D_EPC;
     i1 D_EXL;
@@ -73,11 +70,11 @@ module MyCore (
             default: CP0_d='0;
         endcase
     end
+    logic cp0_flush;
+    assign cp0_flush = E_pre.exp.wen|M_pre.exp.wen;
     //
     assign F_pre.cp0_int = CP0_nxt.status[0]&(~CP0_nxt.status[1])&(int_info!='0);
     assign int_info = ({ext_int, 2'b00}|CP0_nxt.cause[15:8]|{time_int, 7'b0})&CP0_nxt.status[15:8];
-    assign E_cpw = M_pre.exp.wen;
-    assign E_cpr = M_pre.exp.regw;
     assign regval_execute = M_pre.valA;
     assign regw_execute = E.regw;
     assign regval_memory = W_pre.valA;
@@ -97,7 +94,10 @@ module MyCore (
     regfile reg_c(.*);
     hilo hilo_c(.*);
     //
-    assign F_pre.pc = exp?0'hbfc00380:(M.exp.eret?M.valA:(ifj?pc_decode:pc_fetch));
+    pc_selector pcSelector(
+        .nxt_pc(F_pre.pc),
+        .exp,.eret(M.exp.eret),.ifj,.pc_decode,.pc_fetch,.EPC(M.valA),
+    );
     //
     always_comb begin
         CP0_nxt=CP0;
@@ -138,6 +138,9 @@ module MyCore (
     //control
     always_comb begin
         F_st='0;D_st='0;D_bb='0;E_bb='0;EM_st='0;M_bb='0;W_bb='0;
+        if(cp0_flush) begin
+            F_st='1;D_bb='1;
+        end
         if (pcf1==1'b1||pcf2==1'b1) begin
             F_st='1;D_st='1;E_bb='1;
         end
