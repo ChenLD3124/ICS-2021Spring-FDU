@@ -40,37 +40,38 @@ module memory(
         M_ADES='1;
       end
     end
+    assign exp = M.exp[11:0]!='0;
     always_comb begin
-      exp='0;excode='0;
+      excode='0;
       cp0_badwen='0;cp0_badvaddr='0;
       if (M.exp.INT) begin
-        exp='1;excode=INT;
+        excode=INT;
       end
       else if (M.exp.ADEL) begin
-        exp='1;excode=ADEL;cp0_badwen='1;
+        excode=ADEL;cp0_badwen='1;
         cp0_badvaddr=M.pc;
       end
       else if (M.exp.SYS) begin
-        exp='1;excode=SYS;
+        excode=SYS;
       end
       else if (M.exp.BP) begin
-        exp='1;excode=BP;
+        excode=BP;
       end
       else if (M.exp.RI) begin
-        exp='1;excode=RI;
+        excode=RI;
       end
       else if (M.exp.OV) begin
-        exp='1;excode=OV;
+        excode=OV;
       end
       else if (M.exp.TR) begin
-        exp='1;excode=TR;
+        excode=TR;
       end
       else if (M_ADEL) begin
-        exp='1;excode=ADEL;cp0_badwen='1;
+        excode=ADEL;cp0_badwen='1;
         cp0_badvaddr=M.valA;
       end
       else if (M_ADES) begin
-        exp='1;excode=ADES;cp0_badwen='1;
+        excode=ADES;cp0_badwen='1;
         cp0_badvaddr=M.valA;
       end
     end
