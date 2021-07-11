@@ -24,7 +24,7 @@ module decode(
         pcf1='0;
         hd1=rd1;
         hd2=rd2;
-        if (D.exp[11:0]=='0) begin
+        if (D.exp[20:9]=='0) begin
             //memory data crush
             if (ra1!=5'b0&&ra1==regw_memory) begin
                 hd1=regval_memory;
@@ -53,7 +53,7 @@ module decode(
     assign cpa=CP0_d;
     always_comb begin
         ra1='0;ra2='0;
-        if (D.exp[11:0]=='0) begin
+        if (D.exp[20:9]=='0) begin
             unique case (D.imp[31:26])
                 OP_RTYPE,OP_BEQ,OP_BNE,OP_SW,OP_SH,OP_SB,OP_SWL,OP_SWR,OP_LWL,OP_LWR:begin ra1=D.imp[25:21];ra2=D.imp[20:16]; end
                 OP_ADDIU,OP_SLTI,OP_SLTIU,OP_ANDI,OP_ORI,OP_XORI,OP_LUI,OP_LW,OP_ADDI,
@@ -90,7 +90,7 @@ module decode(
         E_pre.exp.EXL=D_EXL;
         // E_pre.exp.INT=cp0_int;
         //decode
-        if (D.exp[11:0]=='0) begin
+        if (D.exp[20:9]=='0) begin
             unique case (E_pre.OP)
                 OP_RTYPE:begin
                     E_pre.regw=D.imp[15:11];

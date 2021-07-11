@@ -9,7 +9,7 @@ module execute(
     logic valid_m,done_m,valid_d,done_d;
     i32 a,b;
     i64 c_m,c_d,tmp;
-    assign pcf4 = E.exp[11:0]!='0?'0:((valid_m&(~done_m))|(valid_d&(~done_d)));
+    assign pcf4 = E.exp[20:9]!='0?'0:((valid_m&(~done_m))|(valid_d&(~done_d)));
     mult mult_c(.done(done_m),.valid(valid_m),.c(c_m),.*);
     div div_c(.done(done_d),.valid(valid_d),.c(c_d),.*);
     always_comb begin
@@ -22,7 +22,7 @@ module execute(
         M_pre.exp=E.exp;
         M_pre.pc_l=D_pc;
         // M_pre.t=E.t;
-        if (E.exp[11:0]=='0) begin
+        if (E.exp[20:9]=='0) begin
             unique case (E.OP)
                 OP_RTYPE:begin
                     unique case (E.FN)

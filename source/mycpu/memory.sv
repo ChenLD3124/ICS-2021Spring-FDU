@@ -40,7 +40,7 @@ module memory(
         M_ADES='1;
       end
     end
-    assign exp = M.exp[11:0]!='0;
+    assign exp = M.exp[20:9]!='0||M_ADES||M_ADEL;
     always_comb begin
       excode='0;
       cp0_badwen='0;cp0_badvaddr='0;
