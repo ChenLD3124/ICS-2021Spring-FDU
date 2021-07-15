@@ -8,7 +8,10 @@ module memory(
     output logic pcf3,
     output logic exp,cp0_wen,cp0_badwen,
     output i5 cp0_regw,excode,
-    output i32 cp0_wdata,cp0_badvaddr
+    output i32 cp0_wdata,cp0_badvaddr,
+    input i1 d_tlb_invalid,d_tlb_modified,d_tlb_refill,
+    output i12 offset,
+    output i1 M_index,M_hi,M_lo0,M_lo1
 );
     logic valid,valid_nxt,M_ADEL,M_ADES;
     int tmp;
@@ -27,54 +30,79 @@ module memory(
     assign valid_nxt = valid;
     always_comb begin
       M_ADEL='0;M_ADES='0;
-      if ((M.OP==OP_LW||M.OP==OP_LL)&&M.rm&&(M.valA[0]|M.valA[1])) begin
-        M_ADEL='1;
-      end
-      else if ((M.OP==OP_LH||M.OP==OP_LHU)&&M.rm&&M.valA[0]) begin
-        M_ADEL='1;
-      end
-      else if ((M.OP==OP_SW||M.OP==OP_SC)&&M.wm&&(M.valA[0]|M.valA[1])) begin
-        M_ADES='1;
-      end
-      else if (M.OP==OP_SH&&M.wm&&M.valA[0]) begin
-        M_ADES='1;
-      end
+      if (M.exp[20:9]=='0) begin
+        if ((M.OP==OP_LW||M.OP==OP_LL)&&M.rm&&(M.valA[0]|M.valA[1])) begin
+          M_ADEL='1;
+        end
+        else if ((M.OP==OP_LH||M.OP==OP_LHU)&&M.rm&&M.valA[0]) begin
+          M_ADEL='1;
+        end
+        else if ((M.OP==OP_SW||M.OP==OP_SC)&&M.wm&&(M.valA[0]|M.valA[1])) begin
+          M_ADES='1;
+        end
+        else if (M.OP==OP_SH&&M.wm&&M.valA[0]) begin
+          M_ADES='1;
+        end
+      end 
     end
-    assign exp = M.exp[20:9]!='0||M_ADES||M_ADEL;
+    assign exp = M.exp[20:9]!='0||M_ADES||M_ADEL||d_tlb_invalid||d_tlb_modified||d_tlb_refill;
     always_comb begin
       excode='0;
       cp0_badwen='0;cp0_badvaddr='0;
-      if (M.exp.INT) begin
-        excode=INT;
-      end
-      else if (M.exp.ADEL) begin
-        excode=ADEL;cp0_badwen='1;
-        cp0_badvaddr=M.pc;
-      end
-      else if (M.exp.SYS) begin
-        excode=SYS;
-      end
-      else if (M.exp.BP) begin
-        excode=BP;
-      end
-      else if (M.exp.RI) begin
-        excode=RI;
-      end
-      else if (M.exp.OV) begin
-        excode=OV;
-      end
-      else if (M.exp.TR) begin
-        excode=TR;
-      end
-      else if (M_ADEL) begin
-        excode=ADEL;cp0_badwen='1;
-        cp0_badvaddr=M.valA;
-      end
-      else if (M_ADES) begin
-        excode=ADES;cp0_badwen='1;
-        cp0_badvaddr=M.valA;
-      end
+      offset=12'h180;
+      priority case (1'b1)
+        M.exp.INT:excode=INT;
+        M.exp.ADEL:begin
+          excode=ADEL;cp0_badwen='1;
+          cp0_badvaddr=M.pc;
+        end
+        M.exp.TLBRI:begin
+          offset=M.exp.EXL?12'h180:12'h0;
+          cp0_badwen='1;
+          cp0_badvaddr=M.pc;
+          excode=TLBL;
+        end
+        M.exp.TLBI:begin
+          cp0_badwen='1;
+          cp0_badvaddr=M.pc;
+          excode=TLBL;
+        end
+        M.exp.SYS:excode=SYS;
+        M.exp.BP:excode=BP;
+        M.exp.RI:excode=RI;
+        M.exp.OV:excode=OV;
+        M.exp.TR:excode=TR;
+        M_ADEL:begin
+          excode=ADEL;cp0_badwen='1;
+          cp0_badvaddr=M.valA;
+        end
+        M_ADES:begin
+          excode=ADES;cp0_badwen='1;
+          cp0_badvaddr=M.valA;
+        end
+        d_tlb_refill:begin
+          offset=M.exp.EXL?12'h180:12'h0;
+          cp0_badwen='1;
+          cp0_badvaddr=M.valA;
+          excode=M.wm?TLBS:TLBL;
+        end
+        d_tlb_invalid:begin
+          cp0_badwen='1;
+          cp0_badvaddr=M.valA;
+          excode=M.wm?TLBS:TLBL;
+        end
+        d_tlb_modified:begin
+          cp0_badwen='1;
+          cp0_badvaddr=M.valA;
+          excode=MOD;
+        end
+        default:;
+      endcase
     end
+    assign M_hi = (~exp)&M.entryhi_w;
+    assign M_lo0 = (~exp)&M.lo0_w;
+    assign M_lo1 = (~exp)&M.lo1_w;
+    assign M_index = (~exp)&M.index_w;
     always_comb begin
       cp0_wen='0;cp0_regw='0;
       if (exp=='0&&M.exp.wen) begin
@@ -89,7 +117,7 @@ module memory(
         W_pre.pc=M.pc;
         // W_pre.t=M.t;
         {W_pre.hi_w,W_pre.lo_w}={M.hi_w,M.lo_w};
-        if(exp==1'b0) begin
+        if((M.exp[20:9]!='0||M_ADES||M_ADEL)==1'b0) begin
           dreq.valid = (M.rm|M.wm)?valid:'0;
           if(M.rm) begin
               dreq.addr=M.valA;

@@ -1,17 +1,20 @@
 `include "pipeline.svh"
 module tlb(
 	input logic clk, resetn,
+	input tlbwrite_t tlbw,
+	input tlb_addr_t tlbra,
+	output tlb_entry_t tlbrd,
 	// addr
-	input logic[7:0] asid_i,asid_d,
+	input logic[7:0] asid,
 	input word_t inst_vaddr, data_vaddr,
-	output word_t inst_paddr_tlb, data_paddr_tlb,// ??
+	output word_t inst_paddr_tlb, data_paddr_tlb,
 	output logic i_invalid, d_invalid, 
 	output logic i_dirty, d_dirty,
 	output logic i_hit, d_hit,
 	output logic [2:0] d_cache_flag,i_cache_flag
 	// TLBP
-	input cp0_entryhi_t entryhi,
-	output cp0_index_t index
+	input i32 entryhi,
+	output i32 index
     );
 	tlb_table_t tlb_table;
 	assign tlbrd = tlb_table[tlbra];
@@ -28,16 +31,16 @@ module tlb(
 	tlblut_resp_t i_resp, d_resp, tlbp_resp;
 	assign inst_paddr_tlb = i_resp.paddr;
 	assign data_paddr_tlb = d_resp.paddr;
-	assign index.P = ~tlbp_resp.hit;
-	assign index.index = tlbp_resp.tlb_addr;
-	assign index.zero = '0;
+	assign index[31:31] = ~tlbp_resp.hit;
+	assign index[TLB_BIT-1:0] = tlbp_resp.tlb_addr;
+	assign index[30:TLB_BIT] = '0;
 	tlb_lut ilut(.tlb_table,
 		     .vaddr(inst_vaddr),
-		     .asid(asid_i),
+		     .asid,
 		     .tlblut_resp(i_resp));
 	tlb_lut dlut(.tlb_table,
 		     .vaddr(data_vaddr),
-		     .asid(asid_d),
+		     .asid,
 		     .tlblut_resp(d_resp));
 	tlb_lut tlbp_lut(.tlb_table,
 			 .vaddr(entryhi),
@@ -50,4 +53,5 @@ module tlb(
 	assign i_hit = i_resp.hit;
 	assign d_hit = d_resp.hit;
 	assign d_cache_flag = d_resp.cache_flag;
+	assign I_cache_flag = i_resp.cache_flag;
 endmodule

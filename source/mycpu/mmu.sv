@@ -5,14 +5,17 @@ module mmu(
     input dbus_req_t dreq,
     output ibus_req_t ireq_p,
     output dbus_req_t dreq_p,
-    output nocache_i,nocache_d
+    input tu_op_req_t tu_op_req,
+    output tu_op_resp_t tu_op_resp,
+    output nocache_i,nocache_d,
+    input i1 k0_uncached,is_store
 );
     tu_addr_req_t  i_req,  d_req;
     tu_addr_resp_t i_resp, d_resp;
     translation translation_inst(
             .clk, .resetn,
             .op_req(tu_op_req), .op_resp(tu_op_resp),
-            .k0_uncached(1'b1), .is_store(is_store),
+            .k0_uncached, .is_store(is_store),
             .i_req, .i_resp,
             .d_req, .d_resp
     );
@@ -21,6 +24,8 @@ module mmu(
     assign i_req.req = ireq.valid;
     assign d_req.vaddr = dreq.addr;
     assign d_req.req = dreq.valid;
+    assign nocache_i = i_resp.is_uncached;
+    assign nocache_d = d_resp.is_uncached;
 
     assign ireq_p.addr = i_resp.paddr;
     assign ireq_p.valid = ireq.valid & ~|{tu_op_resp.i_tlb_invalid,

@@ -2,7 +2,7 @@
 `define __PIPELINE_SVH__
 `include "common.svh"
 typedef struct packed {
-    logic INT,MOD,TLBL,TLBS,ADEL,ADES,SYS,BP,RI,CPU,OV,TR;
+    logic INT,TLBM,TLBRI,TLBI,ADEL,ADES,SYS,BP,RI,CPU,OV,TR;
     logic wen,EXL,eret,t;
     logic [4:0] regw;
 } EXP_sig;
@@ -41,7 +41,7 @@ typedef enum i8 {
     CONFIG1 = {5'h10,3'h1}
 } CP0_reg_t;
 typedef struct packed {
-    i32 index,random,entrylo0,entrylo1,Context,pagemask,wired,badvaddr,count,entryhi,compare,EPC,status,cause,prid,Config,config1;
+    i32 index,entrylo0,entrylo1,Context,wired,badvaddr,count,entryhi,compare,EPC,status,cause,prid,Config,config1;
 } CP0_t;
 typedef struct packed {
     i32 pc;
@@ -55,13 +55,13 @@ typedef struct packed {
     i6 OP,FN;
     i5 regw,sa;
     i32 valA,valB,valC,valD,pc;
-    logic hi_w,lo_w,t;
+    logic hi_w,lo_w,t,index_w,entryhi_w,lo0_w,lo1_w,tlbwi;
     EXP_sig exp;
 } E_type;
 typedef struct packed {
     i6 OP;
-    i32 valA,valB,pc,pc_l;
-    logic rm,wm,hi_w,lo_w;
+    i32 valA,valB,valC,pc,pc_l;
+    logic rm,wm,hi_w,lo_w,index_w,entryhi_w,lo0_w,lo1_w,tlbwi;
     i5 regw;
     EXP_sig exp;
 } M_type;
@@ -71,15 +71,18 @@ typedef struct packed {
     // logic rm;
     logic wen,hi_w,lo_w;
 } W_type;
-// typedef logic[31:0] word_t;
+
 typedef struct packed {
-    logic [18:0] vpn2;
-    logic [7:0] asid;
-    logic G;
-    logic [19:0] pfn0, pfn1;
-    logic [2:0] C0, C1;
-    logic V0, V1, D0, D1;
+	logic [18:0] vpn2;
+	logic [7:0] asid;
+	logic G;
+	logic [19:0] pfn0, pfn1;
+	logic [2:0] C0, C1;
+	logic V0, V1, D0, D1;
 } tlb_entry_t;
+parameter int TLB_ENTRIES = 16
+parameter int TLB_BIT = 4;
+typedef tlb_entry_t[TLB_ENTRIES-1:0] tlb_table_t;
 typedef logic[4:0] creg_addr_t;
 typedef enum i6 {
     OP_RTYPE = 6'b000000,
@@ -176,6 +179,12 @@ typedef enum i5 {
     TLTIU  = 5'b01011,
     TNEI   = 5'b01110
 } funct3_t;
+typedef enum i6 { 
+    ERET = 6'b011000,
+    TLBP = 6'b001000,
+    TLBR = 6'b000001,
+    TLBWI= 6'b000010
+}CP0_func_t;
 parameter int TABEL_ENTRIES=16;
 typedef struct packed {
 	logic is_tlbwi;
@@ -188,10 +197,10 @@ typedef struct packed {
 	i32 entryhi;
 	i32 entrylo0, entrylo1;
 	i32 index;
-	logic i_tlb_invalid; // && req
-	logic i_tlb_modified; // && is store
-	logic d_tlb_invalid; // && req
-	logic d_tlb_modified; // && is store
+	logic i_tlb_invalid;
+	logic i_tlb_modified;
+	logic d_tlb_invalid;
+	logic d_tlb_modified;
 	logic i_tlb_refill;
 	logic d_tlb_refill;
 	logic i_mapped;
@@ -205,4 +214,16 @@ typedef struct packed {
 	logic  is_uncached;
 	word_t paddr;
 } tu_addr_resp_t;
+typedef struct packed {
+	word_t paddr;
+	logic hit, dirty, valid;
+	tlb_addr_t tlb_addr;
+	logic [2:0] cache_flag;
+} tlblut_resp_t;
+typedef struct packed {
+	logic valid;
+	tlb_addr_t addr;
+	tlb_entry_t data;
+} tlbwrite_t;
+typedef logic[TLB_BIT-1:0] tlb_addr_t;
 `endif

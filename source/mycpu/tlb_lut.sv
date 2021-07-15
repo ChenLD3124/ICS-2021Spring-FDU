@@ -2,7 +2,8 @@
 module tlb_lut (
     input tlb_table_t tlb_table,  // global in hardware
     input word_t vaddr,
-    input logic [7:0] asid
+    input logic [7:0] asid,
+    output tlblut_resp_t tlblut_resp
 );
     logic [TLB_ENTRIES-1:0] hit_mask;
     tlb_addr_t hit_addr;
@@ -26,4 +27,9 @@ module tlb_lut (
         vaddr[12] ? tlb_table[hit_addr].pfn1 : tlb_table[hit_addr].pfn0,
         vaddr[11:0]
     };
+    assign tlblut_resp.tlb_addr = hit_addr;
+	assign tlblut_resp.hit = |hit_mask;
+	assign tlblut_resp.dirty = vaddr[12] ? tlb_table[hit_addr].D1 : tlb_table[hit_addr].D0;
+	assign tlblut_resp.valid = vaddr[12] ? tlb_table[hit_addr].V1 : tlb_table[hit_addr].V0;
+	assign tlblut_resp.cache_flag = vaddr[12] ? tlb_table[hit_addr].C1 : tlb_table[hit_addr].C0;
 endmodule

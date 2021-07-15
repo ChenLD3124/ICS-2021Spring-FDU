@@ -21,7 +21,9 @@ module execute(
         M_pre.pc=E.pc;
         M_pre.exp=E.exp;
         M_pre.pc_l=D_pc;
-        // M_pre.t=E.t;
+        M_pre.tlbwi=E.tlbwi;
+        {M_pre.hi_w,M_pre.lo0_w,M_pre.lo1_w,M_pre.index_w}={
+            E.hi_w,E.lo0_w,E.lo1_w,E.index_w};
         if (E.exp[20:9]=='0) begin
             unique case (E.OP)
                 OP_RTYPE:begin
@@ -185,6 +187,8 @@ module execute(
                 end
                 OP_COP0:begin
                     M_pre.valA=E.valA;
+                    M_pre.valB=E.valB;
+                    M_pre.valC=E.valC;
                 end
                 OP_SP2:begin
                     unique case (E.FN)

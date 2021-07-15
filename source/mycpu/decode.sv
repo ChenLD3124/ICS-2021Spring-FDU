@@ -15,7 +15,8 @@ module decode(
     input logic e_hi,e_lo,m_hi,m_lo,
     input i32 regval_elo,regval_mlo,
     input i32 CP0_d,D_EPC,
-    input i1 D_EXL
+    input i1 D_EXL,
+    input tu_op_resp_t tu_op_resp
 );
     i32 pc_nxt,hd1,hd2,hd3,hd4,cpa;
     assign hd3 = e_hi?regval_execute:(m_hi?regval_memory:hi_new);
@@ -238,15 +239,29 @@ module decode(
                             E_pre.exp.regw=D.imp[15:11];
                             E_pre.exp.wen='1;
                         end
-                        default:begin
-                            if (D.imp[25]) begin
-                                E_pre.valA=D_EPC;
-                                E_pre.exp.eret='1;
-                            end
-                            else begin
-                                E_pre.exp.RI='1;
-                            end
+                        5'b10000:begin
+                            unique case (D.imp[5:0])
+                                ERET:begin
+                                    E_pre.valA=D_EPC;
+                                    E_pre.exp.eret='1;
+                                end
+                                TLBP:begin
+                                    E_pre.valA=tu_op_resp.index;
+                                    E_pre.index_w='1;
+                                end
+                                TLBR:begin
+                                    E_pre.valA=tu_op_resp.entryhi;
+                                    E_pre.valB=tu_op_resp.entrylo0;
+                                    E_pre.valC=tu_op_resp.entrylo1;
+                                    E_pre.entryhi_w='1;E_pre.lo0_w='1;E_pre.lo1_w='1;
+                                end
+                                TLBWI:begin
+                                    E_pre.tlbwi='1;
+                                end
+                                default:E_pre.exp.RI='1;
+                            endcase
                         end
+                        default:E_pre.exp.RI='1;
                     endcase
                 end
                 OP_SP2:begin

@@ -8,7 +8,7 @@ module fetch(
     output logic pcf2,
     input logic clk,
     input logic resetn,
-    input logic cp0_t
+    input logic cp0_t,i_tlb_invalid,i_tlb_refill
 );
     logic valid,valid_nxt,int_err;
     assign D_pre.pc = F.pc;
@@ -19,6 +19,8 @@ module fetch(
       D_pre.exp='0;
       D_pre.exp.ADEL=int_err;
       D_pre.exp.INT=F.cp0_int;
+      D_pre.exp.TLBI=i_tlb_invalid;
+      D_pre.exp.TLBRI=i_tlb_refill;
       D_pre.exp.t=cp0_t;
     end
     //

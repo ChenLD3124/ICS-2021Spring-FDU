@@ -46,8 +46,11 @@ module VTop (
     /**
      * TODO (optional) add address translation for oreq.addr :)
      */
-    // mmu mymmu(.*);
-    memtrans transinsti(.vaddr(ireq.addr),.paddr(ipaddr));
+    tu_op_req_t tu_op_req;
+    tu_op_resp_t tu_op_resp;
+    i1 k0_uncached,is_store;
+    mmu mymmu(.*);
+    /*memtrans transinsti(.vaddr(ireq.addr),.paddr(ipaddr));
     always_comb begin
         ireq_p=ireq;
         ireq_p.addr=ipaddr;
@@ -56,6 +59,6 @@ module VTop (
     always_comb begin
         dreq_p=dreq;
         dreq_p.addr=dpaddr;
-    end
+    end*/
     // `UNUSED_OK({ext_int});
 endmodule
